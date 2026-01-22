@@ -58,5 +58,4 @@ jobs:
       - name: CDK Deploy
         run: |
           cd infra
-        # --require-approval never = не спрашивать "вы уверены?"
           npx aws-cdk deploy --all --require-approval never
