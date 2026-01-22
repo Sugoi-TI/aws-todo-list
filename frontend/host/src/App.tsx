@@ -5,8 +5,8 @@ const RemoteTodoForm = lazy(() => import("todoForm/TodoForm"));
 // @ts-ignore
 const RemoteTodoList = lazy(() => import("todoList/TodoList"));
 
-const API_URL = "https://vuci74twf2.execute-api.eu-central-1.amazonaws.com";
-const USER_ID = "frontend_user_1";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const USER_ID = import.meta.env.VITE_USER_ID || "test_user";
 
 function App() {
     const [refreshTrigger, setRefreshTrigger] = useState(0);

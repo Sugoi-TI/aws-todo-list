@@ -46,6 +46,11 @@ jobs:
         run: |
           cd frontend/host
           yarn build
+        env:
+          VITE_FORM_URL: ${{ vars.VITE_FORM_URL }}
+          VITE_LIST_URL: ${{ vars.VITE_LIST_URL }}}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_USER_ID: ${{ vars.VITE_USER_ID }}
 
       # ДЕПЛОЙ ИНФРАСТРУКТУРЫ (CDK)
       - name: Deploy AWS CDK
