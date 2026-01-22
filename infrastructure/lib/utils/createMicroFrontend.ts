@@ -21,9 +21,9 @@ const createMicroFrontend = (scope: Construct, id: string, pathDist: string): st
     // 2. CloudFront
     const distribution = new cloudfront.Distribution(scope, `${id}Distribution`, {
         defaultBehavior: {
-            origin: new origins.S3Origin(bucket),
+            origin: origins.S3BucketOrigin.withOriginAccessControl(bucket),
             viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-            cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // usefull to disable for tests
+            // cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // useful to disable for tests
         },
         defaultRootObject: 'index.html',
         errorResponses: [
