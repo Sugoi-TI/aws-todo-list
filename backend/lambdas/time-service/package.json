@@ -1,0 +1,22 @@
+{
+  "name": "task-writer-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "sugoi_ti",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.971.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.159",
+    "@types/node": "^25.0.9",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "esbuild": "^0.27.2"
+  },
+  "scripts": {
+    "test": "tsx src/run-local.ts",
+    "build": "esbuild src/index.ts --bundle --minify --platform=node --target=node20 --outfile=dist/index.js --external:@aws-sdk/*"
+  }
+}
