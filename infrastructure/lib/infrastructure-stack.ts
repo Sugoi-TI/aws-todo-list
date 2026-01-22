@@ -70,6 +70,13 @@ export class InfrastructureStack extends cdk.Stack {
       corsPreflight: {
         allowOrigins: ['*'],
         allowMethods: [apigw.CorsHttpMethod.GET, apigw.CorsHttpMethod.POST],
+        allowHeaders: [
+          'Content-Type',
+          'Authorization',
+          'X-Amz-Date',
+          'X-Api-Key',
+        ],
+        maxAge: cdk.Duration.days(1),
       },
     });
 
