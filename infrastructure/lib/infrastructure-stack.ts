@@ -10,7 +10,7 @@ import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as path from 'path';
 import createMicroFrontend from "./utils/createMicroFrontend";
 
-export class InfraStack extends cdk.Stack {
+export class InfrastructureStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
