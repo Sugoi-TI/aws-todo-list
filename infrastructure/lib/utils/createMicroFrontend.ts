@@ -24,6 +24,15 @@ const createMicroFrontend = (scope: Construct, id: string, pathDist: string): st
             origin: origins.S3BucketOrigin.withOriginAccessControl(bucket),
             viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             // cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // useful to disable for tests
+            responseHeadersPolicy: new cloudfront.ResponseHeadersPolicy(scope, `${id}CorsPolicy`, {
+                corsBehavior: {
+                    accessControlAllowCredentials: false,
+                    accessControlAllowHeaders: ['*'],
+                    accessControlAllowMethods: ['GET', 'HEAD', 'OPTIONS'],
+                    accessControlAllowOrigins: ['*'],
+                    originOverride: true,
+                },
+            }),
         },
         defaultRootObject: 'index.html',
         errorResponses: [
