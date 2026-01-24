@@ -10,33 +10,30 @@ export const handler = async (event: SQSEvent) => {
 
     for (const record of event.Records) {
         try {
-            // 1. Парсим сообщение из SQS
-            // Внимание: SQS присылает body всегда строкой
             const body = JSON.parse(record.body);
 
             console.log(
-                `Обрабатываю задачу: ${body.title} (ID сообщения: ${record.messageId})`,
+                `Parsing task: ${body.title} (Massage ID: ${record.messageId})`,
             );
 
-            // 2. Пишем в DynamoDB
             const command = new PutCommand({
-                TableName: "Tasks", // Убедись, что имя таблицы совпадает с созданной в консоли
+                TableName: "Tasks",
                 Item: {
-                    id: record.messageId, // Генерируем ID на основе ID сообщения SQS
+                    id: record.messageId,
                     userId: body.userId,
                     title: body.title,
                     message: body.message,
-                    createdAt: body.createdAt, // Время, которое добавил time-service
+                    createdAt: body.createdAt,
                     status: "NEW",
                 },
             });
 
             await docClient.send(command);
-            console.log("Успешно сохранено в БД");
+            console.log("Data saved in the DB");
         } catch (error) {
-            console.error("Ошибка обработки сообщения:", error);
+            console.error("Parsing message error: ", error);
             throw error;
-            // Важно: если не выбросить ошибку (throw), SQS посчитает, что сообщение обработано
+            // Throw or SQS will consider task done
         }
     }
 

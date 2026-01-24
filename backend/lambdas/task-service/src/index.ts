@@ -2,7 +2,7 @@ import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 
-// Клиент инициализируется вне хендлера (Best Practice для переиспользования коннектов)
+// Initialize outside the handler to reuse it if lambda is not could
 const sqs = new SQSClient({});
 const lambda = new LambdaClient({});
 const sqsUrl =
@@ -11,14 +11,10 @@ const sqsUrl =
 export const handler = async (
     event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-    // В реальном API Gateway body приходит как строка.
-    // Но если ты тестируешь локально и передаешь объект, нужно проверить.
-    // Безопасный парсинг:
     let body;
     try {
         body = event.body ? JSON.parse(event.body) : {};
     } catch (e) {
-        // Если event.body уже объект (бывает в тестах)
         body = event.body;
     }
 
@@ -36,13 +32,11 @@ export const handler = async (
 
         const invokeCommand = new InvokeCommand({
             FunctionName: "time-service",
-            InvocationType: "RequestResponse", // Ждем ответа (синхронно)
+            InvocationType: "RequestResponse",
         });
 
         const timeResponse = await lambda.send(invokeCommand);
 
-        // 3. Декодируем ответ от Лямбды
-        // Payload приходит как Uint8Array, нужно превратить в строку
         if (!timeResponse.Payload) {
             throw new Error("Time service returned no payload");
         }
@@ -54,12 +48,11 @@ export const handler = async (
 
         console.log("Time received:", timeData.time);
 
-        // 4. Формируем финальный объект для очереди
         const taskPayload = {
             userId: body.userId,
             title: body.title,
             message: body.message,
-            createdAt: timeData.time, // Добавили время из сервиса
+            createdAt: timeData.time,
         };
 
         const command = new SendMessageCommand({

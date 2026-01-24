@@ -10,7 +10,7 @@ const mockEvent: Partial<APIGatewayProxyEvent> = {
 };
 
 console.log("--- STARTING LOCAL TS TEST ---");
-// @ts-ignore - игнорируем несовпадение неполного мока с полным типом
+// @ts-ignore
 const response = await handler(mockEvent);
 console.log("--- RESPONSE ---");
 console.log(response);
