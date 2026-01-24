@@ -1,5 +1,5 @@
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
@@ -19,7 +19,7 @@ const sqs = new SQSClient({});
 const lambda = new LambdaClient({});
 const dynamo = new DynamoDBClient({});
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   if (!QUEUE_URL) {
     throw new Error("Critical: QUEUE_URL is not defined in environment variables");
   }
@@ -30,7 +30,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     throw new Error("Critical: TABLE_NAME is not defined in environment variables");
   }
 
-  if (event.httpMethod === "GET") {
+  const method = event.requestContext?.http?.method;
+
+  if (method === "GET") {
     try {
       // later will be fetched by user Id
       const command = new ScanCommand({
@@ -56,7 +58,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
   }
 
-  if (event.httpMethod === "POST") {
+  if (method === "POST") {
     let body;
     try {
       body = event.body ? JSON.parse(event.body) : {};
