@@ -69,7 +69,7 @@ export class InfrastructureStack extends cdk.Stack {
     const api = new apigw.HttpApi(this, 'TodoApi', {
       corsPreflight: {
         allowOrigins: ['*'],
-        allowMethods: [apigw.CorsHttpMethod.GET, apigw.CorsHttpMethod.POST],
+        allowMethods: [apigw.CorsHttpMethod.GET, apigw.CorsHttpMethod.POST, apigw.CorsHttpMethod.OPTIONS],
         allowHeaders: [
           'Content-Type',
           'Authorization',

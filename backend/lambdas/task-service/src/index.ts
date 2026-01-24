@@ -71,6 +71,10 @@ export const handler = async (
                 message: "Task queued",
                 id: result.MessageId,
             }),
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Content-Type": "application/json"
+            },
         };
     } catch (error) {
         console.error("SQS Error:", error);
