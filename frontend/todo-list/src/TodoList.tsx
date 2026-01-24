@@ -17,18 +17,17 @@ const TodoList = ({ apiUrl, refreshTrigger }: Props) => {
   const [todos, setTodos] = useState<Todo[]>([]);
 
   useEffect(() => {
-    // const res = await fetch(`${apiUrl}/tasks`);
-    console.log("Fetching list from:", apiUrl);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTodos([
-      {
-        id: "1",
-        title: "Mock Task",
-        message: "Hello from MF",
-        status: "NEW",
-        createdAt: new Date().toISOString(),
-      },
-    ]);
+    const fetchTodos = async () => {
+      fetch(`${apiUrl}/tasks`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("Todos loaded:", data);
+          setTodos(data);
+        })
+        .catch((err) => console.error("Failed to load tasks", err));
+    };
+
+    fetchTodos();
   }, [apiUrl, refreshTrigger]);
 
   return (
