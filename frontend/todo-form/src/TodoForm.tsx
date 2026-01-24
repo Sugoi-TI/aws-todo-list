@@ -1,21 +1,21 @@
 import { useState } from "react";
+import { apiRequest } from "@my-app/shared";
 
 type Props = {
   apiUrl: string;
-  userId: string;
   onSuccess: () => void;
 };
 
-const TodoForm = ({ apiUrl, userId, onSuccess }: Props) => {
+const TodoForm = ({ apiUrl, onSuccess }: Props) => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch(`${apiUrl}/tasks`, {
+      const response = await apiRequest(`${apiUrl}/tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, message, userId }),
+        body: JSON.stringify({ title, message }),
       });
 
       if (response.ok) {

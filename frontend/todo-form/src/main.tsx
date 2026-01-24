@@ -5,6 +5,6 @@ import TodoForm from "./TodoForm.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <TodoForm apiUrl="" userId="123" onSuccess={() => null} />
+    <TodoForm apiUrl="" onSuccess={() => null} />
   </StrictMode>,
 );

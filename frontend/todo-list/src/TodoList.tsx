@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiRequest } from "@my-app/shared";
 
 type Todo = {
   id: string;
@@ -18,7 +19,7 @@ const TodoList = ({ apiUrl, refreshTrigger }: Props) => {
 
   useEffect(() => {
     const fetchTodos = async () => {
-      fetch(`${apiUrl}/tasks`)
+      apiRequest(`${apiUrl}/tasks`)
         .then((res) => res.json())
         .then((data) => {
           console.log("Todos loaded:", data);
