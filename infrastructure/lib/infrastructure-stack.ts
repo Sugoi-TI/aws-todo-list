@@ -43,6 +43,7 @@ export class InfrastructureStack extends cdk.Stack {
         TIME_SERVICE_ARN: timeService.functionArn,
         TIME_SERVICE_NAME: timeService.functionName,
         QUEUE_URL: queue.queueUrl,
+        TABLE_NAME: table.tableName,
       },
     });
 
@@ -59,8 +60,8 @@ export class InfrastructureStack extends cdk.Stack {
     timeService.grantInvoke(taskService);
     queue.grantSendMessages(taskService);
     queue.grantConsumeMessages(taskWorker);
-    table.grantReadData(taskWorker);
     table.grantWriteData(taskWorker);
+    table.grantReadData(taskService);
 
     // 5. Configure triggers
     taskWorker.addEventSource(
@@ -83,10 +84,9 @@ export class InfrastructureStack extends cdk.Stack {
       },
     });
 
-    //  POST /tasks
     api.addRoutes({
       path: "/tasks",
-      methods: [apigw.HttpMethod.POST],
+      methods: [apigw.HttpMethod.GET, apigw.HttpMethod.POST],
       integration: new HttpLambdaIntegration("TaskServiceIntegration", taskService),
     });
 
