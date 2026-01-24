@@ -2,10 +2,12 @@ import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 
+const QUEUE_URL = process.env.QUEUE_URL;
+const TIME_SERVICE_NAME = process.env.TIME_SERVICE_NAME;
+
 // Initialize outside the handler to reuse it if lambda is not could
 const sqs = new SQSClient({});
 const lambda = new LambdaClient({});
-const QUEUE_URL = process.env.QUEUE_URL;
 
 export const handler = async (
     event: APIGatewayProxyEvent,
@@ -34,7 +36,7 @@ export const handler = async (
         console.log("Calling time-service...");
 
         const invokeCommand = new InvokeCommand({
-            FunctionName: "time-service",
+            FunctionName: TIME_SERVICE_NAME,
             InvocationType: "RequestResponse",
         });
 
