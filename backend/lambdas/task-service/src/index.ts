@@ -16,6 +16,10 @@ export const handler = async (
         throw new Error("Critical: QUEUE_URL is not defined in environment variables");
     }
 
+    if (!TIME_SERVICE_NAME) {
+        throw new Error("Critical: TIME_SERVICE_NAME is not defined in environment variables");
+    }
+
     let body;
     try {
         body = event.body ? JSON.parse(event.body) : {};

@@ -41,6 +41,7 @@ export class InfrastructureStack extends cdk.Stack {
       handler: 'handler',
       environment: {
         TIME_SERVICE_ARN: timeService.functionArn,
+        TIME_SERVICE_NAME: timeService.functionName,
         QUEUE_URL: queue.queueUrl,
       },
     });
@@ -56,7 +57,6 @@ export class InfrastructureStack extends cdk.Stack {
 
     // 4. Configure access (IAM)
     timeService.grantInvoke(taskService);
-    taskService.addEnvironment('TimeServiceName', timeService.functionName);
 
     queue.grantSendMessages(taskService);
     queue.grantConsumeMessages(taskWorker);
