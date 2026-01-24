@@ -8,6 +8,8 @@ const RemoteTodoForm = lazy(() => import("todoForm/TodoForm"));
 // @ts-ignore
 const RemoteTodoList = lazy(() => import("todoList/TodoList"));
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -23,13 +25,14 @@ function App() {
           <h1>Todo Micro-Frontends App</h1>
           <p>Host Application</p>
           <p>User: {user?.username}</p>
+          <button onClick={signOut}>SignOut</button>
 
           <Suspense fallback={<div>Loading Form...</div>}>
-            <RemoteTodoForm onSuccess={handleSuccess} />
+            <RemoteTodoForm apiUrl={API_URL} onSuccess={handleSuccess} />
           </Suspense>
 
           <Suspense fallback={<div>Loading List...</div>}>
-            <RemoteTodoList refreshTrigger={refreshTrigger} />
+            <RemoteTodoList apiUrl={API_URL} refreshTrigger={refreshTrigger} />
           </Suspense>
         </div>
       )}

@@ -5,6 +5,6 @@ import TodoList from "./TodoList.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <TodoList refreshTrigger={0} />
+    <TodoList apiUrl="" refreshTrigger={0} />
   </StrictMode>,
 );
