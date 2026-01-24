@@ -57,7 +57,6 @@ export class InfrastructureStack extends cdk.Stack {
 
     // 4. Configure access (IAM)
     timeService.grantInvoke(taskService);
-
     queue.grantSendMessages(taskService);
     queue.grantConsumeMessages(taskWorker);
     table.grantWriteData(taskWorker);
