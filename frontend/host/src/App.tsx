@@ -1,6 +1,5 @@
 import { useState, Suspense, lazy } from "react";
 
-import { Amplify } from "aws-amplify";
 import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 
@@ -10,15 +9,6 @@ const RemoteTodoForm = lazy(() => import("todoForm/TodoForm"));
 const RemoteTodoList = lazy(() => import("todoList/TodoList"));
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
-Amplify.configure({
-  Auth: {
-    Cognito: {
-      userPoolId: import.meta.env.VITE_USER_POOL_ID,
-      userPoolClientId: import.meta.env.VITE_USER_POOL_CLIENT_ID,
-    },
-  },
-});
 
 function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -34,6 +24,7 @@ function App() {
         <div style={{ fontFamily: "Arial", padding: "20px" }}>
           <h1>Todo Micro-Frontends App</h1>
           <p>Host Application</p>
+          <p>User: {user?.username}</p>
 
           <Suspense fallback={<div>Loading Form...</div>}>
             <RemoteTodoForm apiUrl={API_URL} onSuccess={handleSuccess} />
