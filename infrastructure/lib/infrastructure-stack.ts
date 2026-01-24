@@ -116,10 +116,6 @@ export class InfrastructureStack extends cdk.Stack {
       authorizer,
     });
 
-    new cdk.CfnOutput(this, "ApiUrl", {
-      value: api.url ?? "Something went wrong",
-    });
-
     const hostUrl = createMicroFrontend(
       this,
       "HostApp",
@@ -136,6 +132,9 @@ export class InfrastructureStack extends cdk.Stack {
       path.join(__dirname, "../../frontend/todo-list/dist"),
     );
 
+    new cdk.CfnOutput(this, "ApiUrl", {
+      value: api.url ?? "Something went wrong",
+    });
     new cdk.CfnOutput(this, "HostUrl", { value: `https://${hostUrl}` });
     new cdk.CfnOutput(this, "FormUrl", { value: `https://${formUrl}` });
     new cdk.CfnOutput(this, "ListUrl", { value: `https://${listUrl}` });

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiRequest } from "@my-app/shared";
+import { createApiRequest } from "@my-app/shared";
 
 type Todo = {
   id: string;
@@ -10,16 +10,19 @@ type Todo = {
 };
 
 type Props = {
-  apiUrl: string;
   refreshTrigger: number;
 };
 
-const TodoList = ({ apiUrl, refreshTrigger }: Props) => {
+const API_URL = import.meta.env.VITE_API_URL;
+
+const TodoList = ({ refreshTrigger }: Props) => {
+  const apiRequest = createApiRequest(API_URL);
+
   const [todos, setTodos] = useState<Todo[]>([]);
 
   useEffect(() => {
     const fetchTodos = async () => {
-      apiRequest(`${apiUrl}/tasks`)
+      apiRequest("/tasks")
         .then((res) => res.json())
         .then((data) => {
           console.log("Todos loaded:", data);
@@ -29,7 +32,7 @@ const TodoList = ({ apiUrl, refreshTrigger }: Props) => {
     };
 
     fetchTodos();
-  }, [apiUrl, refreshTrigger]);
+  }, [apiRequest, refreshTrigger]);
 
   return (
     <div style={{ border: "1px solid green", padding: "10px", margin: "10px" }}>

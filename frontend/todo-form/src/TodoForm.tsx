@@ -1,18 +1,21 @@
 import { useState } from "react";
-import { apiRequest } from "@my-app/shared";
+import { createApiRequest } from "@my-app/shared";
 
 type Props = {
-  apiUrl: string;
   onSuccess: () => void;
 };
 
-const TodoForm = ({ apiUrl, onSuccess }: Props) => {
+const API_URL = import.meta.env.VITE_API_URL;
+
+const TodoForm = ({ onSuccess }: Props) => {
+  const apiRequest = createApiRequest(API_URL);
+
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async () => {
     try {
-      const response = await apiRequest(`${apiUrl}/tasks`, {
+      const response = await apiRequest("/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, message }),
