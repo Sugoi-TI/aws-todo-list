@@ -5,12 +5,15 @@ import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 // Initialize outside the handler to reuse it if lambda is not could
 const sqs = new SQSClient({});
 const lambda = new LambdaClient({});
-const sqsUrl =
-    "https://sqs.eu-central-1.amazonaws.com/248585128710/tasks-queue";
+const QUEUE_URL = process.env.SQS_QUEUE_URL;
 
 export const handler = async (
     event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
+    if (!QUEUE_URL) {
+        throw new Error("Critical: SQS_QUEUE_URL is not defined in environment variables");
+    }
+
     let body;
     try {
         body = event.body ? JSON.parse(event.body) : {};
@@ -56,7 +59,7 @@ export const handler = async (
         };
 
         const command = new SendMessageCommand({
-            QueueUrl: sqsUrl,
+            QueueUrl: QUEUE_URL,
             MessageBody: JSON.stringify(taskPayload),
         });
 
