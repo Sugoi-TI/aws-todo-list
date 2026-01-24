@@ -6,8 +6,10 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.975.0",
     "@aws-sdk/client-lambda": "^3.971.0",
-    "@aws-sdk/client-sqs": "^3.971.0"
+    "@aws-sdk/client-sqs": "^3.971.0",
+    "@aws-sdk/util-dynamodb": "^3.975.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.159",

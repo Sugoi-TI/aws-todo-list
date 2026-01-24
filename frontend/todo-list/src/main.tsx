@@ -4,8 +4,7 @@ import "./index.css";
 import TodoList from "./TodoList.tsx";
 
 createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-        <TodoList apiUrl={""} refreshTrigger={0}
-        />
-    </StrictMode>,
+  <StrictMode>
+    <TodoList apiUrl={""} refreshTrigger={0} />
+  </StrictMode>,
 );

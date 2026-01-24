@@ -3,7 +3,7 @@ name: Deploy Full Stack
 on:
   push:
     branches:
-      - main  # Срабатывать при пуше в main
+      - main # Срабатывать при пуше в main
   workflow_dispatch: # Возможность запустить кнопку вручную
 
 jobs:
@@ -22,8 +22,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'yarn' # Кешируем модули Yarn
+          node-version: "20"
+          cache: "yarn" # Кешируем модули Yarn
 
       - name: Install dependencies (Root)
         run: yarn install

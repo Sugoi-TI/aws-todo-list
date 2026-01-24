@@ -1,8 +1,8 @@
 export const handler = async () => {
-    const now = new Date().toISOString();
-    console.log("Generating time:", now);
+  const now = new Date().toISOString();
+  console.log("Generating time:", now);
 
-    return {
-        time: now,
-    };
+  return {
+    time: now,
+  };
 };

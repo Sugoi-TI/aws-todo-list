@@ -1,27 +1,27 @@
-import {defineConfig, loadEnv} from 'vite';
-import react from '@vitejs/plugin-react';
-import federation from '@originjs/vite-plugin-federation';
+import { defineConfig, loadEnv } from "vite";
+import react from "@vitejs/plugin-react";
+import federation from "@originjs/vite-plugin-federation";
 
-export default defineConfig(({mode}) =>{
-  const env = loadEnv(mode, process.cwd(), '');
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
 
   return {
     plugins: [
       react(),
       federation({
-        name: 'host_app',
+        name: "host_app",
         remotes: {
           // in production here we will have links to S3/CloudFront
-          todoList: env.VITE_LIST_URL || 'http://localhost:5001/assets/remoteEntry.js',
-          todoForm: env.VITE_FORM_URL || 'http://localhost:5002/assets/remoteEntry.js',
-          API_URL: env.VITE_API_URL || '',
-          USER_ID: env.VITE_USER_ID || '',
+          todoList: env.VITE_LIST_URL || "http://localhost:5001/assets/remoteEntry.js",
+          todoForm: env.VITE_FORM_URL || "http://localhost:5002/assets/remoteEntry.js",
+          API_URL: env.VITE_API_URL || "",
+          USER_ID: env.VITE_USER_ID || "",
         },
-        shared: ['react', 'react-dom'],
+        shared: ["react", "react-dom"],
       }),
     ],
     build: {
-      target: 'esnext',
+      target: "esnext",
     },
-  }
+  };
 });
