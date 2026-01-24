@@ -35,7 +35,7 @@ export class InfrastructureStack extends cdk.Stack {
       signInAliases: { email: true },
       autoVerify: { email: true },
       passwordPolicy: {
-        minLength: 5,
+        minLength: 6,
         requireLowercase: false,
         requireUppercase: false,
         requireDigits: true,
