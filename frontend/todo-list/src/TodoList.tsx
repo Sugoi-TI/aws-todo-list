@@ -10,13 +10,12 @@ type Todo = {
 };
 
 type Props = {
+  apiUrl: string;
   refreshTrigger: number;
 };
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-const TodoList = ({ refreshTrigger }: Props) => {
-  const apiRequest = createApiRequest(API_URL);
+const TodoList = ({ apiUrl, refreshTrigger }: Props) => {
+  const apiRequest = createApiRequest(apiUrl);
 
   const [todos, setTodos] = useState<Todo[]>([]);
 

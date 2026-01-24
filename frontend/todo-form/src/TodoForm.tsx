@@ -2,13 +2,12 @@ import { useState } from "react";
 import { createApiRequest } from "@my-app/shared";
 
 type Props = {
+  apiUrl: string;
   onSuccess: () => void;
 };
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-const TodoForm = ({ onSuccess }: Props) => {
-  const apiRequest = createApiRequest(API_URL);
+const TodoForm = ({ apiUrl, onSuccess }: Props) => {
+  const apiRequest = createApiRequest(apiUrl);
 
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
