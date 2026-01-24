@@ -4,8 +4,6 @@ import "./index.css";
 import App from "./App.tsx";
 import { Amplify } from "aws-amplify";
 
-console.log(import.meta.env);
-console.log(import.meta.env.VITE_USER_POOL_CLIENT_ID);
 Amplify.configure({
   Auth: {
     Cognito: {
@@ -14,7 +12,6 @@ Amplify.configure({
     },
   },
 });
-console.log(Amplify.getConfig());
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

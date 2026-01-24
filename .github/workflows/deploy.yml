@@ -45,7 +45,8 @@ jobs:
           VITE_FORM_URL: ${{ vars.VITE_FORM_URL }}
           VITE_LIST_URL: ${{ vars.VITE_LIST_URL }}
           VITE_API_URL: ${{ vars.VITE_API_URL }}
-          VITE_USER_ID: ${{ vars.VITE_USER_ID }}
+          VITE_USER_POOL_ID: ${{ vars.VITE_USER_POOL_ID }}
+          VITE_USER_POOL_CLIENT_ID: ${{ vars.VITE_USER_POOL_CLIENT_ID }}
 
       - name: Deploy AWS CDK
         uses: aws-actions/configure-aws-credentials@v4
