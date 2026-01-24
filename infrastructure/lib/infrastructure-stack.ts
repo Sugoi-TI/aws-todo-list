@@ -9,25 +9,53 @@ import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
 import createMicroFrontend from "./utils/createMicroFrontend";
+import * as cognito from "aws-cdk-lib/aws-cognito";
+import { HttpUserPoolAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 
 export class InfrastructureStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // 1. DynamoDB
     const table = new dynamodb.Table(this, "TasksTable", {
       partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // free tier (On-demand)
       // removalPolicy: cdk.RemovalPolicy.DESTROY, // Important for test envs to clean up DB
     });
 
-    // 2. SQS
+    table.addGlobalSecondaryIndex({
+      indexName: "byUserId",
+      partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "createdAt", type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    const userPool = new cognito.UserPool(this, "TodoUserPool", {
+      userPoolName: "todo-user-pool",
+      selfSignUpEnabled: true,
+      signInAliases: { email: true },
+      autoVerify: { email: true },
+      passwordPolicy: {
+        minLength: 5,
+        requireLowercase: false,
+        requireUppercase: false,
+        requireDigits: true,
+        requireSymbols: false,
+      },
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    const userPoolClient = new cognito.UserPoolClient(this, "TodoUserPoolClient", {
+      userPool,
+      generateSecret: false,
+    });
+
+    const authorizer = new HttpUserPoolAuthorizer("TodoAuthorizer", userPool, {
+      userPoolClients: [userPoolClient],
+    });
+
     const queue = new sqs.Queue(this, "TasksQueue", {
       visibilityTimeout: cdk.Duration.seconds(30), // time to process message
     });
-
-    // 3. Lambdas
-    // Using NodejsFunction - it will build  TS files with esbuild
 
     const timeService = new lambdaNode.NodejsFunction(this, "TimeService", {
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -56,21 +84,18 @@ export class InfrastructureStack extends cdk.Stack {
       },
     });
 
-    // 4. Configure access (IAM)
     timeService.grantInvoke(taskService);
     queue.grantSendMessages(taskService);
     queue.grantConsumeMessages(taskWorker);
     table.grantWriteData(taskWorker);
     table.grantReadData(taskService);
 
-    // 5. Configure triggers
     taskWorker.addEventSource(
       new SqsEventSource(queue, {
         batchSize: 10,
       }),
     );
 
-    // 6. API Gateway
     const api = new apigw.HttpApi(this, "TodoApi", {
       corsPreflight: {
         allowOrigins: ["*"],
@@ -88,14 +113,13 @@ export class InfrastructureStack extends cdk.Stack {
       path: "/tasks",
       methods: [apigw.HttpMethod.GET, apigw.HttpMethod.POST],
       integration: new HttpLambdaIntegration("TaskServiceIntegration", taskService),
+      authorizer,
     });
 
-    // Output URL API into console after deploy
     new cdk.CfnOutput(this, "ApiUrl", {
       value: api.url ?? "Something went wrong",
     });
 
-    // 7. Frontend
     const hostUrl = createMicroFrontend(
       this,
       "HostApp",
@@ -112,9 +136,11 @@ export class InfrastructureStack extends cdk.Stack {
       path.join(__dirname, "../../frontend/todo-list/dist"),
     );
 
-    // Output frontend URLs
     new cdk.CfnOutput(this, "HostUrl", { value: `https://${hostUrl}` });
     new cdk.CfnOutput(this, "FormUrl", { value: `https://${formUrl}` });
     new cdk.CfnOutput(this, "ListUrl", { value: `https://${listUrl}` });
+
+    new cdk.CfnOutput(this, "UserPoolId", { value: userPool.userPoolId });
+    new cdk.CfnOutput(this, "UserPoolClientId", { value: userPoolClient.userPoolClientId });
   }
 }

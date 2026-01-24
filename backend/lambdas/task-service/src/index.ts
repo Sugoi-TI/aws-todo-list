@@ -1,7 +1,7 @@
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from "aws-lambda";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, QueryCommand, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 
 const QUEUE_URL = process.env.QUEUE_URL;
@@ -19,7 +19,9 @@ const sqs = new SQSClient({});
 const lambda = new LambdaClient({});
 const dynamo = new DynamoDBClient({});
 
-export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (
+  event: APIGatewayProxyEventV2WithJWTAuthorizer,
+): Promise<APIGatewayProxyResultV2> => {
   if (!QUEUE_URL) {
     throw new Error("Critical: QUEUE_URL is not defined in environment variables");
   }
@@ -30,13 +32,24 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     throw new Error("Critical: TABLE_NAME is not defined in environment variables");
   }
 
+  const userId = event.requestContext.authorizer?.jwt.claims.sub as string;
+
+  if (!userId) {
+    return { statusCode: 401, body: JSON.stringify({ message: "Unauthorized" }) };
+  }
+
   const method = event.requestContext?.http?.method;
 
   if (method === "GET") {
     try {
-      // later will be fetched by user Id
-      const command = new ScanCommand({
+      const command = new QueryCommand({
         TableName: TABLE_NAME,
+        IndexName: "byUserId",
+        KeyConditionExpression: "userId = :uid",
+        ExpressionAttributeValues: {
+          ":uid": { S: userId },
+        },
+        ScanIndexForward: false,
       });
 
       const result = await dynamo.send(command);
@@ -66,7 +79,7 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
       body = event.body;
     }
 
-    if (!body || !body.userId || !body.title || !body.message) {
+    if (!body || !body.title || !body.message) {
       return {
         statusCode: 400,
         body: JSON.stringify({
@@ -95,7 +108,7 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
       console.log("Time received:", timeData.time);
 
       const taskPayload = {
-        userId: body.userId,
+        userId,
         title: body.title,
         message: body.message,
         createdAt: timeData.time,

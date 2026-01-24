@@ -3,14 +3,13 @@ name: Deploy Full Stack
 on:
   push:
     branches:
-      - main # Срабатывать при пуше в main
-  workflow_dispatch: # Возможность запустить кнопку вручную
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # Разрешаем Actions использовать токены OIDC (нужно для AWS CDK последних версий)
     permissions:
       id-token: write
       contents: read
@@ -23,13 +22,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "yarn" # Кешируем модули Yarn
+          cache: "yarn"
 
       - name: Install dependencies (Root)
         run: yarn install
 
-      # СБОРКА ФРОНТЕНДА
-      # Важно: Сначала билдим, чтобы появились папки dist для CDK
       - name: Build Todo Form
         run: |
           cd frontend/todo-form
@@ -40,8 +37,6 @@ jobs:
           cd frontend/todo-list
           yarn build
 
-        # Важно: Хост должен знать URL-адреса ремоутов.
-        # Пока оставим как есть, но ниже я напишу, как это автоматизировать красиво.
       - name: Build Host
         run: |
           cd frontend/host
@@ -52,7 +47,6 @@ jobs:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
           VITE_USER_ID: ${{ vars.VITE_USER_ID }}
 
-      # ДЕПЛОЙ ИНФРАСТРУКТУРЫ (CDK)
       - name: Deploy AWS CDK
         uses: aws-actions/configure-aws-credentials@v4
         with:
