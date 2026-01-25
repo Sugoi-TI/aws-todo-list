@@ -16,10 +16,20 @@ export class InfrastructureStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // Get environment variables or use defaults
+    // const environment = props?.env?.account ? "prod" : "dev";
+
+    // Create DynamoDB table with configurable name
+    const tableName = new cdk.CfnParameter(this, "TableName", {
+      type: "String",
+      description: "DynamoDB table name",
+      // default: `todo-tasks-${environment}`,
+    });
+
     const table = new dynamodb.Table(this, "TasksTable", {
+      tableName: tableName.valueAsString,
       partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // free tier (On-demand)
-      // removalPolicy: cdk.RemovalPolicy.DESTROY, // Important for test envs to clean up DB
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
 
     table.addGlobalSecondaryIndex({
@@ -30,7 +40,7 @@ export class InfrastructureStack extends cdk.Stack {
     });
 
     const userPool = new cognito.UserPool(this, "TodoUserPool", {
-      userPoolName: "todo-user-pool",
+      // userPoolName: `todo-user-pool-${environment}`,
       selfSignUpEnabled: true,
       signInAliases: { email: true },
       autoVerify: { email: true },
@@ -53,14 +63,24 @@ export class InfrastructureStack extends cdk.Stack {
       userPoolClients: [userPoolClient],
     });
 
-    const queue = new sqs.Queue(this, "TasksQueue", {
-      visibilityTimeout: cdk.Duration.seconds(30), // time to process message
+    // Create SQS queue with configurable name
+    const queueName = new cdk.CfnParameter(this, "QueueName", {
+      type: "String",
+      description: "SQS queue name",
+      // default: `todo-tasks-queue-${environment}`,
     });
 
+    const queue = new sqs.Queue(this, "TasksQueue", {
+      queueName: queueName.valueAsString,
+      visibilityTimeout: cdk.Duration.seconds(30),
+    });
+
+    // Create Lambda functions with configurable environment variables
     const timeService = new lambdaNode.NodejsFunction(this, "TimeService", {
       runtime: lambda.Runtime.NODEJS_20_X,
       entry: path.join(__dirname, "../../backend/lambdas/time-service/src/index.ts"),
       handler: "handler",
+      timeout: cdk.Duration.seconds(30),
     });
 
     const taskService = new lambdaNode.NodejsFunction(this, "TaskService", {
@@ -71,8 +91,9 @@ export class InfrastructureStack extends cdk.Stack {
         TIME_SERVICE_ARN: timeService.functionArn,
         TIME_SERVICE_NAME: timeService.functionName,
         QUEUE_URL: queue.queueUrl,
-        TABLE_NAME: table.tableName,
+        TABLE_NAME: tableName.valueAsString,
       },
+      timeout: cdk.Duration.seconds(30),
     });
 
     const taskWorker = new lambdaNode.NodejsFunction(this, "TaskWorker", {
@@ -80,22 +101,26 @@ export class InfrastructureStack extends cdk.Stack {
       entry: path.join(__dirname, "../../backend/lambdas/task-writer-service/src/index.ts"),
       handler: "handler",
       environment: {
-        TABLE_NAME: table.tableName,
+        TABLE_NAME: tableName.valueAsString,
       },
+      timeout: cdk.Duration.seconds(30),
     });
 
+    // Grant proper permissions
     timeService.grantInvoke(taskService);
     queue.grantSendMessages(taskService);
     queue.grantConsumeMessages(taskWorker);
     table.grantWriteData(taskWorker);
     table.grantReadData(taskService);
 
+    // Add SQS event source to task worker
     taskWorker.addEventSource(
       new SqsEventSource(queue, {
         batchSize: 10,
       }),
     );
 
+    // Create API Gateway with proper CORS
     const api = new apigw.HttpApi(this, "TodoApi", {
       corsPreflight: {
         allowOrigins: ["*"],
@@ -116,6 +141,7 @@ export class InfrastructureStack extends cdk.Stack {
       authorizer,
     });
 
+    // Create micro-frontend outputs
     const hostUrl = createMicroFrontend(
       this,
       "HostApp",
@@ -132,14 +158,43 @@ export class InfrastructureStack extends cdk.Stack {
       path.join(__dirname, "../../frontend/todo-list/dist"),
     );
 
+    // Output all required values
     new cdk.CfnOutput(this, "ApiUrl", {
       value: api.url ?? "Something went wrong",
+      description: "API Gateway URL",
     });
-    new cdk.CfnOutput(this, "HostUrl", { value: `https://${hostUrl}` });
-    new cdk.CfnOutput(this, "FormUrl", { value: `https://${formUrl}` });
-    new cdk.CfnOutput(this, "ListUrl", { value: `https://${listUrl}` });
+    new cdk.CfnOutput(this, "HostUrl", {
+      value: `https://${hostUrl}`,
+      description: "Host application URL",
+    });
+    new cdk.CfnOutput(this, "FormUrl", {
+      value: `https://${formUrl}`,
+      description: "Form application URL",
+    });
+    new cdk.CfnOutput(this, "ListUrl", {
+      value: `https://${listUrl}`,
+      description: "List application URL",
+    });
 
-    new cdk.CfnOutput(this, "UserPoolId", { value: userPool.userPoolId });
-    new cdk.CfnOutput(this, "UserPoolClientId", { value: userPoolClient.userPoolClientId });
+    new cdk.CfnOutput(this, "UserPoolId", {
+      value: userPool.userPoolId,
+      description: "Cognito User Pool ID",
+    });
+    new cdk.CfnOutput(this, "UserPoolClientId", {
+      value: userPoolClient.userPoolClientId,
+      description: "Cognito User Pool Client ID",
+    });
+    new cdk.CfnOutput(this, "TableName", {
+      value: tableName.valueAsString,
+      description: "DynamoDB table name",
+    });
+    new cdk.CfnOutput(this, "QueueUrl", {
+      value: queue.queueUrl,
+      description: "SQS Queue URL",
+    });
+    new cdk.CfnOutput(this, "QueueName", {
+      value: queue.queueName,
+      description: "SQS Queue Name",
+    });
   }
 }
