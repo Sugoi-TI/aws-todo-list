@@ -17,7 +17,24 @@ export default defineConfig(({ mode }) => {
           API_URL: env.VITE_API_URL || "",
           USER_ID: env.VITE_USER_ID || "",
         },
-        shared: ["react", "react-dom"],
+        shared: {
+          react: {
+            singleton: true,
+            requiredVersion: false,
+          },
+          "react-dom": {
+            singleton: true,
+            requiredVersion: false,
+          },
+          "aws-amplify": {
+            singleton: true,
+            requiredVersion: false,
+          },
+          "@aws-amplify/ui-react": {
+            singleton: true,
+            requiredVersion: false,
+          },
+        } as never,
       }),
     ],
     build: {

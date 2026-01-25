@@ -11,7 +11,24 @@ export default defineConfig({
       exposes: {
         "./TodoList": "./src/TodoList",
       },
-      shared: ["react", "react-dom"],
+      shared: {
+        react: {
+          singleton: true,
+          requiredVersion: false,
+        },
+        "react-dom": {
+          singleton: true,
+          requiredVersion: false,
+        },
+        "aws-amplify": {
+          singleton: true,
+          requiredVersion: false,
+        },
+        "@aws-amplify/ui-react": {
+          singleton: true,
+          requiredVersion: false,
+        },
+      } as never,
     }),
   ],
   build: {
