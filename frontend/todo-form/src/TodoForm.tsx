@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useApi } from "@my-app/shared/src/apiContext.tsx";
+import { apiContext } from "@my-app/shared";
 
 type Props = {
   onSuccess: () => void;
@@ -8,7 +8,7 @@ type Props = {
 const TodoForm = ({ onSuccess }: Props) => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const api = useApi();
+  const api = apiContext.useApi();
 
   const handleSubmit = async () => {
     try {

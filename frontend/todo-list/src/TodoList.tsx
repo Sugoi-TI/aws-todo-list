@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useApi } from "@my-app/shared/src/apiContext.tsx";
+import { apiContext } from "@my-app/shared";
 
 type Todo = {
   id: string;
@@ -15,7 +15,7 @@ type Props = {
 
 const TodoList = ({ refreshTrigger }: Props) => {
   const [todos, setTodos] = useState<Todo[]>([]);
-  const api = useApi();
+  const api = apiContext.useApi();
 
   useEffect(() => {
     const fetchTodos = async () => {
