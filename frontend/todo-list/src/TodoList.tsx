@@ -15,17 +15,20 @@ type Props = {
 
 const TodoList = ({ refreshTrigger }: Props) => {
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const api = apiContext.useApi();
 
   useEffect(() => {
     const fetchTodos = async () => {
+      setIsLoading(true);
       api("/tasks")
         .then((res) => res.json())
         .then((data) => {
           console.log("Todos loaded:", data);
           setTodos(data);
         })
-        .catch((err) => console.error("Failed to load tasks", err));
+        .catch((err) => console.error("Failed to load tasks", err))
+        .finally(() => setIsLoading(false));
     };
 
     fetchTodos();
@@ -35,11 +38,13 @@ const TodoList = ({ refreshTrigger }: Props) => {
     <div style={{ border: "1px solid green", padding: "10px", margin: "10px" }}>
       <h3>Micro-frontend: List</h3>
       <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>
-            <b>{todo.title}</b>: {todo.message}
-          </li>
-        ))}
+        {isLoading
+          ? "Loading..."
+          : todos.map((todo) => (
+              <li key={todo.id}>
+                <b>{todo.title}</b>: {todo.message}
+              </li>
+            ))}
       </ul>
     </div>
   );
