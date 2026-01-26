@@ -2,6 +2,7 @@ import { useState, Suspense, lazy } from "react";
 
 import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
+import { createApiClient } from "@my-app/shared";
 
 // @ts-ignore
 const RemoteTodoForm = lazy(() => import("todoForm/TodoForm"));
@@ -18,6 +19,8 @@ function App() {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const apiClient = createApiClient(API_URL);
+
   return (
     <Authenticator>
       {({ signOut, user }) => (
@@ -28,11 +31,11 @@ function App() {
           <button onClick={signOut}>SignOut</button>
 
           <Suspense fallback={<div>Loading Form...</div>}>
-            <RemoteTodoForm apiUrl={API_URL} onSuccess={handleSuccess} />
+            <RemoteTodoForm apiUrl={apiClient} onSuccess={handleSuccess} />
           </Suspense>
 
           <Suspense fallback={<div>Loading List...</div>}>
-            <RemoteTodoList apiUrl={API_URL} refreshTrigger={refreshTrigger} />
+            <RemoteTodoList apiUrl={apiClient} refreshTrigger={refreshTrigger} />
           </Suspense>
         </div>
       )}

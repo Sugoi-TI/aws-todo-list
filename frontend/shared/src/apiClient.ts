@@ -1,6 +1,8 @@
 import { fetchAuthSession } from "aws-amplify/auth";
 
-export const createApiRequest = (baseUrl: string) => {
+export type ApiClient = (endpoint: string, options?: RequestInit) => Promise<Response>;
+
+export const createApiClient = (baseUrl: string): ApiClient => {
   return async (endpoint: string, options: RequestInit = {}) => {
     try {
       const session = await fetchAuthSession();
@@ -23,7 +25,7 @@ export const createApiRequest = (baseUrl: string) => {
         throw new Error(`API Error: ${response.status}`);
       }
 
-      return response.json();
+      return response;
     } catch (error) {
       console.error("Request failed:", error);
       throw error;

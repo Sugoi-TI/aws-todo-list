@@ -30,6 +30,10 @@ export default defineConfig(({ mode }) => {
             singleton: true,
             requiredVersion: false,
           },
+          "@aws-amplify/auth": {
+            singleton: true,
+            requiredVersion: false,
+          },
         } as never,
       }),
     ],
