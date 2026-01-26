@@ -30,10 +30,6 @@ export default defineConfig(({ mode }) => {
             singleton: true,
             requiredVersion: false,
           },
-          "@aws-amplify/ui-react": {
-            singleton: true,
-            requiredVersion: false,
-          },
         } as never,
       }),
     ],
