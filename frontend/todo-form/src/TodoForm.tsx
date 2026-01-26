@@ -8,9 +8,11 @@ type Props = {
 const TodoForm = ({ onSuccess }: Props) => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const api = apiContext.useApi();
 
   const handleSubmit = async () => {
+    setIsLoading(true);
     try {
       const response = await api("/tasks", {
         method: "POST",
@@ -21,10 +23,14 @@ const TodoForm = ({ onSuccess }: Props) => {
       if (response.ok) {
         setTitle("");
         setMessage("");
-        onSuccess();
+        setTimeout(() => {
+          onSuccess();
+          setIsLoading(false);
+        }, 200);
       }
     } catch (error) {
       console.error("Error posting todo:", error);
+      setIsLoading(false);
     }
   };
 
@@ -33,7 +39,7 @@ const TodoForm = ({ onSuccess }: Props) => {
       <h3>Micro-frontend: Form</h3>
       <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
       <input placeholder="Message" value={message} onChange={(e) => setMessage(e.target.value)} />
-      <button onClick={handleSubmit}>Submit</button>
+      <button onClick={handleSubmit}>{isLoading ? "Loading..." : "Submit"}</button>
     </div>
   );
 };
