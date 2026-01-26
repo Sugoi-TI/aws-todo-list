@@ -1,18 +1,18 @@
 import { useState } from "react";
-import type { ApiClient } from "@my-app/shared";
+import { useApi } from "@my-app/shared/src/apiContext.tsx";
 
 type Props = {
-  apiClient: ApiClient;
   onSuccess: () => void;
 };
 
-const TodoForm = ({ apiClient, onSuccess }: Props) => {
+const TodoForm = ({ onSuccess }: Props) => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
+  const api = useApi();
 
   const handleSubmit = async () => {
     try {
-      const response = await apiClient("/tasks", {
+      const response = await api("/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, message }),

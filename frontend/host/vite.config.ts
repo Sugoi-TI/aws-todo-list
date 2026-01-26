@@ -34,6 +34,11 @@ export default defineConfig(({ mode }) => {
             singleton: true,
             requiredVersion: false,
           },
+          "@my-app/shared": {
+            singleton: true,
+            import: false,
+            requiredVersion: false,
+          },
         } as never,
       }),
     ],
