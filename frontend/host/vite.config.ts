@@ -39,6 +39,9 @@ export default defineConfig(({ mode }) => {
             import: false,
             requiredVersion: false,
           },
+          zustand: {
+            singleton: true,
+          },
         } as never,
       }),
     ],

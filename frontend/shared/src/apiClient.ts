@@ -9,7 +9,6 @@ export const createApiClient = (baseUrl: string): ApiClient => {
 
       const token = session.tokens?.idToken?.toString();
 
-      console.log(token);
       const headers = {
         "Content-Type": "application/json",
         ...options.headers,

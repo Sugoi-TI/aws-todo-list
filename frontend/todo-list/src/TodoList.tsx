@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiContext } from "@my-app/shared";
+import { apiContext, useAppStore } from "@my-app/shared";
 
 type Todo = {
   id: string;
@@ -16,6 +16,7 @@ type Props = {
 const TodoList = ({ refreshTrigger }: Props) => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { theme } = useAppStore();
   const api = apiContext.useApi();
 
   useEffect(() => {
@@ -37,6 +38,7 @@ const TodoList = ({ refreshTrigger }: Props) => {
   return (
     <div style={{ border: "1px solid green", padding: "10px", margin: "10px" }}>
       <h3>Micro-frontend: List</h3>
+      <p>Theme: {theme}</p>
       <ul>
         {isLoading
           ? "Loading..."

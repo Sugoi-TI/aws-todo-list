@@ -30,6 +30,9 @@ export default defineConfig({
           import: false,
           requiredVersion: false,
         },
+        zustand: {
+          singleton: true,
+        },
       } as never,
     }),
   ],
