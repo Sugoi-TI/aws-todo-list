@@ -135,11 +135,15 @@ export class InfrastructureStack extends cdk.Stack {
     new cdk.CfnOutput(this, "ApiUrl", {
       value: api.url ?? "Something went wrong",
     });
-    new cdk.CfnOutput(this, "HostUrl", { value: `https://${hostUrl}` });
-    new cdk.CfnOutput(this, "FormUrl", { value: `https://${formUrl}` });
-    new cdk.CfnOutput(this, "ListUrl", { value: `https://${listUrl}` });
+    new cdk.CfnOutput(this, "HOST_URL", { value: `https://${hostUrl}` });
+    new cdk.CfnOutput(this, "FROM_URL", { value: `https://${formUrl}` });
+    new cdk.CfnOutput(this, "LIST_URL", { value: `https://${listUrl}` });
 
-    new cdk.CfnOutput(this, "UserPoolId", { value: userPool.userPoolId });
-    new cdk.CfnOutput(this, "UserPoolClientId", { value: userPoolClient.userPoolClientId });
+    new cdk.CfnOutput(this, "QUEUE_URL", { value: queue.queueUrl });
+    new cdk.CfnOutput(this, "TIME_SERVICE_NAME", { value: timeService.functionName });
+    new cdk.CfnOutput(this, "TABLE_NAME", { value: table.tableName });
+
+    new cdk.CfnOutput(this, "USER_POOL_ID", { value: userPool.userPoolId });
+    new cdk.CfnOutput(this, "USER_POOL_CLIENT_ID", { value: userPoolClient.userPoolClientId });
   }
 }
