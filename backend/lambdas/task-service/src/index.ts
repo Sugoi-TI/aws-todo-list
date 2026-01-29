@@ -1,12 +1,13 @@
-import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from "aws-lambda";
-import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
 
-const QUEUE_URL = process.env.QUEUE_URL;
-const TIME_SERVICE_NAME = process.env.TIME_SERVICE_NAME;
 const TABLE_NAME = process.env.TABLE_NAME;
+const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME;
+
+const ebClient = new EventBridgeClient({});
+const dynamo = new DynamoDBClient({});
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -14,19 +15,11 @@ const headers = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-// Initialize outside the handler to reuse it if lambda is not could
-const sqs = new SQSClient({});
-const lambda = new LambdaClient({});
-const dynamo = new DynamoDBClient({});
-
 export const handler = async (
   event: APIGatewayProxyEventV2WithJWTAuthorizer,
 ): Promise<APIGatewayProxyResultV2> => {
-  if (!QUEUE_URL) {
-    throw new Error("Critical: QUEUE_URL is not defined in environment variables");
-  }
-  if (!TIME_SERVICE_NAME) {
-    throw new Error("Critical: TIME_SERVICE_NAME is not defined in environment variables");
+  if (!EVENT_BUS_NAME) {
+    throw new Error("Critical: EVENT_BUS_NAME is not defined in environment variables");
   }
   if (!TABLE_NAME) {
     throw new Error("Critical: TABLE_NAME is not defined in environment variables");
@@ -89,43 +82,35 @@ export const handler = async (
     }
 
     try {
-      console.log("Calling time-service...");
-
-      const invokeCommand = new InvokeCommand({
-        FunctionName: TIME_SERVICE_NAME,
-        InvocationType: "RequestResponse",
-      });
-
-      const timeResponse = await lambda.send(invokeCommand);
-
-      if (!timeResponse.Payload) {
-        throw new Error("Time service returned no payload");
-      }
-
-      const responseString = new TextDecoder("utf-8").decode(timeResponse.Payload);
-      const timeData = JSON.parse(responseString); // { "time": "2026-..." }
-
-      console.log("Time received:", timeData.time);
+      console.log("Publishing TaskReceived event...");
 
       const taskPayload = {
         userId,
         title: body.title,
         message: body.message,
-        createdAt: timeData.time,
+        taskId: crypto.randomUUID(),
       };
 
-      const command = new SendMessageCommand({
-        QueueUrl: QUEUE_URL,
-        MessageBody: JSON.stringify(taskPayload),
+      const command = new PutEventsCommand({
+        Entries: [
+          {
+            Source: "todo.tasks",
+            DetailType: "TaskReceived",
+            Detail: JSON.stringify(taskPayload),
+            EventBusName: EVENT_BUS_NAME,
+          },
+        ],
       });
 
-      const result = await sqs.send(command);
+      const result = await ebClient.send(command);
+      console.log(`Event published ID: ${result.Entries?.[0].EventId}`);
 
       return {
-        statusCode: 200,
+        statusCode: 202,
         body: JSON.stringify({
-          message: "Task queued",
-          id: result.MessageId,
+          message: "Task accepted for processing",
+          eventId: result.Entries?.[0].EventId,
+          taskId: taskPayload.taskId,
         }),
         headers,
       };

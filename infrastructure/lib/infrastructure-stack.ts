@@ -5,18 +5,21 @@ import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as lambdaNode from "aws-cdk-lib/aws-lambda-nodejs";
 import * as apigw from "aws-cdk-lib/aws-apigatewayv2";
+import * as events from "aws-cdk-lib/aws-events";
+import * as targets from "aws-cdk-lib/aws-events-targets";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
 import createMicroFrontend from "./utils/createMicroFrontend";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import { HttpUserPoolAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
+import { EntityNames, EventNames, TaskRules } from "./variables";
 
 export class InfrastructureStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const table = new dynamodb.Table(this, "TasksTable", {
+    const table = new dynamodb.Table(this, EntityNames.TasksTable, {
       partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // free tier (On-demand)
       // removalPolicy: cdk.RemovalPolicy.DESTROY, // Important for test envs to clean up DB
@@ -29,7 +32,7 @@ export class InfrastructureStack extends cdk.Stack {
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
-    const userPool = new cognito.UserPool(this, "TodoUserPool", {
+    const userPool = new cognito.UserPool(this, EntityNames.TodoUserPool, {
       userPoolName: "todo-user-pool",
       selfSignUpEnabled: true,
       signInAliases: { email: true },
@@ -44,38 +47,38 @@ export class InfrastructureStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
-    const userPoolClient = new cognito.UserPoolClient(this, "TodoUserPoolClient", {
+    const userPoolClient = new cognito.UserPoolClient(this, EntityNames.TodoUserPoolClient, {
       userPool,
       generateSecret: false,
     });
 
-    const authorizer = new HttpUserPoolAuthorizer("TodoAuthorizer", userPool, {
+    const authorizer = new HttpUserPoolAuthorizer(EntityNames.TodoAuthorizer, userPool, {
       userPoolClients: [userPoolClient],
     });
 
-    const queue = new sqs.Queue(this, "TasksQueue", {
+    const queue = new sqs.Queue(this, EntityNames.TasksQueue, {
       visibilityTimeout: cdk.Duration.seconds(30), // time to process message
     });
 
-    const timeService = new lambdaNode.NodejsFunction(this, "TimeService", {
+    const eventBus = new events.EventBus(this, EntityNames.TasksEventBus);
+
+    const timeService = new lambdaNode.NodejsFunction(this, EntityNames.TimeService, {
       runtime: lambda.Runtime.NODEJS_20_X,
       entry: path.join(__dirname, "../../backend/lambdas/time-service/src/index.ts"),
       handler: "handler",
     });
 
-    const taskService = new lambdaNode.NodejsFunction(this, "TaskService", {
+    const taskService = new lambdaNode.NodejsFunction(this, EntityNames.TaskService, {
       runtime: lambda.Runtime.NODEJS_20_X,
       entry: path.join(__dirname, "../../backend/lambdas/task-service/src/index.ts"),
       handler: "handler",
       environment: {
-        TIME_SERVICE_ARN: timeService.functionArn,
-        TIME_SERVICE_NAME: timeService.functionName,
-        QUEUE_URL: queue.queueUrl,
+        EVENT_BUS_NAME: eventBus.eventBusName,
         TABLE_NAME: table.tableName,
       },
     });
 
-    const taskWorker = new lambdaNode.NodejsFunction(this, "TaskWorker", {
+    const taskWorker = new lambdaNode.NodejsFunction(this, EntityNames.TaskWorker, {
       runtime: lambda.Runtime.NODEJS_20_X,
       entry: path.join(__dirname, "../../backend/lambdas/task-writer-service/src/index.ts"),
       handler: "handler",
@@ -84,19 +87,35 @@ export class InfrastructureStack extends cdk.Stack {
       },
     });
 
-    timeService.grantInvoke(taskService);
-    queue.grantSendMessages(taskService);
+    const enrichTaskRule = new events.Rule(this, TaskRules.EnrichTaskRule, {
+      eventBus: eventBus,
+      eventPattern: {
+        source: ["todo.tasks"],
+        detailType: [EventNames.TaskReceived],
+      },
+    });
+    enrichTaskRule.addTarget(new targets.LambdaFunction(timeService));
+
+    const saveTaskRule = new events.Rule(this, TaskRules.SaveTaskRule, {
+      eventBus: eventBus,
+      eventPattern: {
+        source: ["todo.tasks"],
+        detailType: [EventNames.TaskEnriched],
+      },
+    });
+    saveTaskRule.addTarget(new targets.SqsQueue(queue));
+
+    eventBus.grantPutEventsTo(taskService);
     queue.grantConsumeMessages(taskWorker);
     table.grantWriteData(taskWorker);
     table.grantReadData(taskService);
-
     taskWorker.addEventSource(
       new SqsEventSource(queue, {
         batchSize: 10,
       }),
     );
 
-    const api = new apigw.HttpApi(this, "TodoApi", {
+    const api = new apigw.HttpApi(this, EntityNames.TodoApi, {
       corsPreflight: {
         allowOrigins: ["*"],
         allowMethods: [
@@ -145,5 +164,7 @@ export class InfrastructureStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, "userPoolId", { value: userPool.userPoolId });
     new cdk.CfnOutput(this, "userPoolClientId", { value: userPoolClient.userPoolClientId });
+
+    new cdk.CfnOutput(this, "eventBusName", { value: eventBus.eventBusName });
   }
 }
