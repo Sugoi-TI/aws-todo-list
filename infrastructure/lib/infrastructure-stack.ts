@@ -110,6 +110,7 @@ export class InfrastructureStack extends cdk.Stack {
     saveTaskRule.addTarget(new targets.SqsQueue(queue));
 
     eventBus.grantPutEventsTo(taskService);
+    eventBus.grantPutEventsTo(timeService);
     queue.grantConsumeMessages(taskWorker);
     table.grantWriteData(taskWorker);
     table.grantReadData(taskService);
