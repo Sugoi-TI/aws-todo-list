@@ -111,9 +111,10 @@ export class InfrastructureStack extends cdk.Stack {
 
     eventBus.grantPutEventsTo(taskService);
     eventBus.grantPutEventsTo(timeService);
-    queue.grantConsumeMessages(taskWorker);
     table.grantWriteData(taskWorker);
     table.grantReadData(taskService);
+
+    queue.grantConsumeMessages(taskWorker);
     taskWorker.addEventSource(
       new SqsEventSource(queue, {
         batchSize: 10,

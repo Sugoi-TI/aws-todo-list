@@ -20,7 +20,7 @@ export const handler = async (event: EventBridgeEvent<EventNames, TaskReceivedPa
 
   const taskPayload: TaskEnrichedPayload = {
     ...event.detail,
-    createAt: now,
+    createdAt: now,
   };
 
   const command = new PutEventsCommand({

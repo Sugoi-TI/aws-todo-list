@@ -18,5 +18,5 @@ export type TaskReceivedPayload = {
 };
 
 export type TaskEnrichedPayload = TaskReceivedPayload & {
-  createAt: string;
+  createdAt: string;
 };
