@@ -18,6 +18,7 @@ export const handler = async (event: SQSEvent) => {
       const body = JSON.parse(record.body);
 
       console.log(`Parsing task: ${body.title} (Massage ID: ${record.messageId})`);
+      console.log("event - ", event);
 
       const command = new PutCommand({
         TableName: TABLE_NAME,
