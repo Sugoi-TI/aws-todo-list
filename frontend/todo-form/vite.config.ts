@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
-import path from "path";
 
 export default defineConfig({
   plugins: [
@@ -25,7 +24,7 @@ export default defineConfig({
           singleton: true,
           requiredVersion: false,
         },
-        "@my-app/shared": {
+        "@my-app/frontend-shared": {
           singleton: true,
           import: false,
           requiredVersion: false,
@@ -36,11 +35,6 @@ export default defineConfig({
       } as never,
     }),
   ],
-  resolve: {
-    alias: {
-      "@my-app/shared": path.resolve(__dirname, "../shared/src/index.ts"),
-    },
-  },
   build: {
     target: "esnext",
   },

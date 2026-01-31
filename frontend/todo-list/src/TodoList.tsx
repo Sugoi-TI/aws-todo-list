@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useApi, useAppStore } from "@my-app/shared";
+import { useApi, useAppStore } from "@my-app/frontend-shared";
 
 type Todo = {
   id: string;

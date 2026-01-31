@@ -2,7 +2,7 @@ import { useState, Suspense, lazy } from "react";
 
 import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
-import { ApiProvider, createApiClient, useAppStore } from "@my-app/shared";
+import { ApiProvider, createApiClient, useAppStore } from "@my-app/frontend-shared";
 
 // @ts-ignore
 const RemoteTodoForm = lazy(() => import("todoForm/TodoForm"));

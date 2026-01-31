@@ -11,13 +11,3 @@ export enum EntityNames {
   TaskCreatedRule = "TaskCreatedRule",
   TodoApi = "TodoApi",
 }
-
-export enum EventNames {
-  TaskReceived = "TaskReceived",
-  TaskEnriched = "TaskEnriched",
-}
-
-export enum TaskRules {
-  EnrichTaskRule = "EnrichTaskRule",
-  SaveTaskRule = "SaveTaskRule",
-}

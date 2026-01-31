@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
             singleton: true,
             requiredVersion: false,
           },
-          "@my-app/shared": {
+          "@my-app/frontend-shared": {
             singleton: true,
             requiredVersion: false,
           },

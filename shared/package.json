@@ -1,5 +1,5 @@
 {
-  "name": "@my-app/frontend-shared",
+  "name": "@my-app/shared",
   "version": "1.0.0",
   "main": "src/index.ts",
   "scripts": {

@@ -2,6 +2,7 @@ import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
+import { EventNames, EventSource, type TaskReceivedPayload } from "@my-app/shared";
 
 const TABLE_NAME = process.env.TABLE_NAME;
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME;
@@ -84,7 +85,7 @@ export const handler = async (
     try {
       console.log("Publishing TaskReceived event...");
 
-      const taskPayload = {
+      const taskPayload: TaskReceivedPayload = {
         userId,
         title: body.title,
         message: body.message,
@@ -94,8 +95,8 @@ export const handler = async (
       const command = new PutEventsCommand({
         Entries: [
           {
-            Source: "todo.tasks",
-            DetailType: "TaskReceived",
+            Source: EventSource,
+            DetailType: EventNames.TaskReceived,
             Detail: JSON.stringify(taskPayload),
             EventBusName: EVENT_BUS_NAME,
           },
@@ -103,6 +104,7 @@ export const handler = async (
       });
 
       const result = await ebClient.send(command);
+
       console.log(`Event published ID: ${result.Entries?.[0].EventId}`);
 
       return {
@@ -115,7 +117,7 @@ export const handler = async (
         headers,
       };
     } catch (error) {
-      console.error("SQS Error:", error);
+      console.error("Bus Error:", error);
       return {
         statusCode: 500,
         body: JSON.stringify({ message: "Internal Server Error" }),

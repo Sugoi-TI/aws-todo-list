@@ -24,7 +24,7 @@ export default defineConfig({
           singleton: true,
           requiredVersion: false,
         },
-        "@my-app/shared": {
+        "@my-app/frontend-shared": {
           singleton: true,
           import: false,
           requiredVersion: false,

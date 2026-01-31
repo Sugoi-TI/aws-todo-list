@@ -13,7 +13,8 @@ import * as path from "path";
 import createMicroFrontend from "./utils/createMicroFrontend";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import { HttpUserPoolAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
-import { EntityNames, EventNames, TaskRules } from "./variables";
+import { EntityNames } from "./variables";
+import { EventNames, EventSource, TaskRules } from "@my-app/shared";
 
 export class InfrastructureStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -90,7 +91,7 @@ export class InfrastructureStack extends cdk.Stack {
     const enrichTaskRule = new events.Rule(this, TaskRules.EnrichTaskRule, {
       eventBus: eventBus,
       eventPattern: {
-        source: ["todo.tasks"],
+        source: [EventSource],
         detailType: [EventNames.TaskReceived],
       },
     });
@@ -99,7 +100,7 @@ export class InfrastructureStack extends cdk.Stack {
     const saveTaskRule = new events.Rule(this, TaskRules.SaveTaskRule, {
       eventBus: eventBus,
       eventPattern: {
-        source: ["todo.tasks"],
+        source: [EventSource],
         detailType: [EventNames.TaskEnriched],
       },
     });
