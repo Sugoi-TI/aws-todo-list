@@ -1,1 +1,1 @@
-export * from "./event-bridge.ts";
+export * from "./event-bridge";

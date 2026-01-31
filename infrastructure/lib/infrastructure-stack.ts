@@ -67,6 +67,9 @@ export class InfrastructureStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_20_X,
       entry: path.join(__dirname, "../../backend/lambdas/time-service/src/index.ts"),
       handler: "handler",
+      environment: {
+        EVENT_BUS_NAME: eventBus.eventBusName,
+      },
     });
 
     const taskService = new lambdaNode.NodejsFunction(this, EntityNames.TaskService, {
