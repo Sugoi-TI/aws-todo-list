@@ -1,3 +1,3 @@
-export * as apiContext from "./apiContext.tsx";
-export * as apiClient from "./apiClient.ts";
+export * from "./apiContext.tsx";
+export * from "./apiClient.ts";
 export * from "./store.ts";

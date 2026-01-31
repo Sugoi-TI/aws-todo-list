@@ -1,6 +1,5 @@
 import React, { createContext, useContext, type ReactNode } from "react";
-
-export type ApiClient = (endpoint: string, options?: RequestInit) => Promise<Response>;
+import type { ApiClient } from "./apiClient.ts";
 
 interface ApiContextType {
   api: ApiClient;

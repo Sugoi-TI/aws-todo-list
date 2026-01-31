@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { apiContext, useAppStore } from "@my-app/shared";
+import { useApi, useAppStore } from "@my-app/shared";
 
 type Props = {
   onSuccess: () => void;
@@ -10,7 +10,7 @@ const TodoForm = ({ onSuccess }: Props) => {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { theme } = useAppStore();
-  const api = apiContext.useApi();
+  const api = useApi();
 
   const handleSubmit = async () => {
     setIsLoading(true);

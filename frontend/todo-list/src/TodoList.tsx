@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiContext, useAppStore } from "@my-app/shared";
+import { useApi, useAppStore } from "@my-app/shared";
 
 type Todo = {
   id: string;
@@ -17,7 +17,7 @@ const TodoList = ({ refreshTrigger }: Props) => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { theme } = useAppStore();
-  const api = apiContext.useApi();
+  const api = useApi();
 
   useEffect(() => {
     const fetchTodos = async () => {
