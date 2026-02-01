@@ -4,7 +4,7 @@ import { EventBridgeEvent, SQSEvent } from "aws-lambda";
 import { EventNames, type TaskEnrichedPayload } from "@my-app/shared";
 
 type UnknownEvent = EventBridgeEvent<string, any>;
-type EnrichedEvent = EventBridgeEvent<EventNames, TaskEnrichedPayload>;
+type EnrichedEvent = EventBridgeEvent<(typeof EventNames)["TaskEnriched"], TaskEnrichedPayload>;
 
 function isEnrichedEvent(event: UnknownEvent): event is EnrichedEvent {
   return event["detail-type"] === EventNames.TaskEnriched;
@@ -36,7 +36,7 @@ export const handler = async (event: SQSEvent) => {
         const command = new PutCommand({
           TableName: TABLE_NAME,
           Item: {
-            id: body.detail.taskId,
+            taskId: body.detail.taskId,
             userId: body.detail.userId,
             title: body.detail.title,
             message: body.detail.message,

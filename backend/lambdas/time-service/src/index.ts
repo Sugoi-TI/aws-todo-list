@@ -10,7 +10,9 @@ import {
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME;
 const ebClient = new EventBridgeClient({});
 
-export const handler = async (event: EventBridgeEvent<EventNames, TaskReceivedPayload>) => {
+export const handler = async (
+  event: EventBridgeEvent<(typeof EventNames)["TaskReceived"], TaskReceivedPayload>,
+) => {
   if (!EVENT_BUS_NAME) {
     throw new Error("Critical: EVENT_BUS_NAME is not defined in environment variables");
   }
