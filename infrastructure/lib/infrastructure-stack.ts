@@ -89,6 +89,15 @@ export class InfrastructureStack extends cdk.Stack {
       },
     });
 
+    const userService = new lambdaNode.NodejsFunction(this, EntityNames.UserService, {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, "../../backend/lambdas/user-service/src/index.ts"),
+      handler: "handler",
+      environment: {
+        TABLE_NAME: userTable.tableName,
+      },
+    });
+
     const enrichTaskRule = new events.Rule(this, TaskRules.EnrichTaskRule, {
       eventBus: eventBus,
       eventPattern: {
@@ -105,6 +114,7 @@ export class InfrastructureStack extends cdk.Stack {
         detailType: [EventNames.TaskEnriched],
       },
     });
+
     saveTaskRule.addTarget(new targets.SqsQueue(queue));
     eventBus.grantPutEventsTo(taskService);
     eventBus.grantPutEventsTo(timeService);
@@ -116,6 +126,8 @@ export class InfrastructureStack extends cdk.Stack {
         batchSize: 10,
       }),
     );
+    userTable.grantWriteData(userService);
+    userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, userService);
 
     const api = new apigw.HttpApi(this, EntityNames.TodoApi, {
       corsPreflight: {
