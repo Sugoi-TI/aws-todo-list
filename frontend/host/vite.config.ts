@@ -12,8 +12,8 @@ export default defineConfig(({ mode }) => {
         name: "host_app",
         remotes: {
           // in production here we will have links to S3/CloudFront
-          todoList: env.VITE_LIST_URL || "http://localhost:5001/assets/remoteEntry.js",
-          todoForm: env.VITE_FORM_URL || "http://localhost:5002/assets/remoteEntry.js",
+          taskList: env.VITE_LIST_URL || "http://localhost:5001/assets/remoteEntry.js",
+          taskForm: env.VITE_FORM_URL || "http://localhost:5002/assets/remoteEntry.js",
           API_URL: env.VITE_API_URL || "",
           USER_ID: env.VITE_USER_ID || "",
         },

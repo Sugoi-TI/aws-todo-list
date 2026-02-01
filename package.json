@@ -9,9 +9,9 @@
   "scripts": {
     "build:shared": "yarn workspace @my-app/shared build",
     "build:frontend-shared": "yarn workspace @my-app/frontend-shared build",
-    "build:remotes": "concurrently \"yarn workspace todo-form build\" \"yarn workspace todo-list build\"",
-    "preview:form": "yarn workspace todo-list preview --port 5001 --strictPort",
-    "preview:list": "yarn workspace todo-form preview --port 5002 --strictPort",
+    "build:remotes": "concurrently \"yarn workspace task-form build\" \"yarn workspace task-list build\"",
+    "preview:form": "yarn workspace task-list preview --port 5001 --strictPort",
+    "preview:list": "yarn workspace task-form preview --port 5002 --strictPort",
     "dev:host": "yarn workspace host dev",
     "dev:simulate": "yarn build:shared && yarn build:frontend-shared && yarn build:remotes && concurrently -k -n \"FORM,LIST,HOST\" -c \"magenta,blue,green\" \"yarn preview:form\" \"yarn preview:list\" \"yarn dev:host\""
   },

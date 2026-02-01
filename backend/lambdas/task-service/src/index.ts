@@ -2,7 +2,7 @@ import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
-import { EventNames, EventSource, type TaskReceivedPayload } from "@my-app/shared";
+import { EventNames, EventSource, TASK_TABLE, type TaskReceivedPayload } from "@my-app/shared";
 
 const TABLE_NAME = process.env.TABLE_NAME;
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME;
@@ -38,7 +38,7 @@ export const handler = async (
     try {
       const command = new QueryCommand({
         TableName: TABLE_NAME,
-        IndexName: "byUserId",
+        IndexName: TASK_TABLE.byUserId,
         KeyConditionExpression: "userId = :uid",
         ExpressionAttributeValues: {
           ":uid": { S: userId },
@@ -77,7 +77,7 @@ export const handler = async (
       return {
         statusCode: 400,
         body: JSON.stringify({
-          message: "Missing userId, title or message",
+          message: "Missing title or message",
         }),
       };
     }

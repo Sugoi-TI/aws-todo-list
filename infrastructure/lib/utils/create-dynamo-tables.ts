@@ -1,7 +1,7 @@
 import { Construct } from "constructs";
-import { EntityNames } from "../../variables";
+import { EntityNames } from "../variables";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
-import { FILE_TABLE, TASK_TABLE, USER_TABLE } from "./types";
+import { FILE_TABLE, TASK_TABLE, USER_TABLE } from "@my-app/shared";
 
 export const createDynamoTables = (scope: Construct) => {
   // User table

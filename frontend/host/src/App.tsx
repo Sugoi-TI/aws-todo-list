@@ -5,9 +5,9 @@ import "@aws-amplify/ui-react/styles.css";
 import { ApiProvider, createApiClient, useAppStore } from "@my-app/frontend-shared";
 
 // @ts-ignore
-const RemoteTodoForm = lazy(() => import("todoForm/TodoForm"));
+const RemoteTaskForm = lazy(() => import("taskForm/TaskForm"));
 // @ts-ignore
-const RemoteTodoList = lazy(() => import("todoList/TodoList"));
+const RemoteTaskList = lazy(() => import("taskList/TaskList"));
 
 const API_URL = import.meta.env.VITE_API_URL;
 const authorizedApiClient = createApiClient(API_URL);
@@ -34,11 +34,11 @@ function App() {
             <button onClick={toggleTheme}>Change theme</button>
 
             <Suspense fallback={<div>Loading Form...</div>}>
-              <RemoteTodoForm onSuccess={handleSuccess} />
+              <RemoteTaskForm onSuccess={handleSuccess} />
             </Suspense>
 
             <Suspense fallback={<div>Loading List...</div>}>
-              <RemoteTodoList refreshTrigger={refreshTrigger} />
+              <RemoteTaskList refreshTrigger={refreshTrigger} />
             </Suspense>
           </div>
         </ApiProvider>

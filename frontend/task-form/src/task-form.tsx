@@ -5,7 +5,7 @@ type Props = {
   onSuccess: () => void;
 };
 
-const TodoForm = ({ onSuccess }: Props) => {
+const TaskForm = ({ onSuccess }: Props) => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -46,4 +46,4 @@ const TodoForm = ({ onSuccess }: Props) => {
   );
 };
 
-export default TodoForm;
+export default TaskForm;

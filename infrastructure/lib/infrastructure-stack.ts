@@ -14,7 +14,7 @@ import * as cognito from "aws-cdk-lib/aws-cognito";
 import { HttpUserPoolAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { EntityNames } from "./variables";
 import { EventNames, EventSource, TaskRules } from "@my-app/shared";
-import { createDynamoTables } from "./utils/dynamo-db/create-dynamo-tables";
+import { createDynamoTables } from "./utils/create-dynamo-tables";
 
 export class InfrastructureStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -156,13 +156,13 @@ export class InfrastructureStack extends cdk.Stack {
     );
     const formUrl = createMicroFrontend(
       this,
-      "TodoFormApp",
-      path.join(__dirname, "../../frontend/todo-form/dist"),
+      "TaskFormApp",
+      path.join(__dirname, "../../frontend/task-form/dist"),
     );
     const listUrl = createMicroFrontend(
       this,
-      "TodoListApp",
-      path.join(__dirname, "../../frontend/todo-list/dist"),
+      "TaskListApp",
+      path.join(__dirname, "../../frontend/task-list/dist"),
     );
 
     new cdk.CfnOutput(this, "ApiUrl", {

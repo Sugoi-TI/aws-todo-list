@@ -1,5 +1,5 @@
 {
-  "name": "todo-form",
+  "name": "task-list",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,7 +12,8 @@
   "dependencies": {
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@my-app/frontend-shared": "*"
+    "@my-app/frontend-shared": "*",
+    "@my-app/shared": "*"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

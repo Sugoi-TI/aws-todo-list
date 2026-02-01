@@ -1,2 +1,3 @@
 export * from "./event-bridge";
-export * from "./types/tables";
+export * from "./types/tables-types";
+export * from "./types/table-fields";

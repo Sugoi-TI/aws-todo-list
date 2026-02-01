@@ -6,10 +6,10 @@ export default defineConfig({
   plugins: [
     react(),
     federation({
-      name: "todo_form_app",
+      name: "task_list_app",
       filename: "remoteEntry.js",
       exposes: {
-        "./TodoForm": "./src/TodoForm",
+        "./TaskList": "./src/task-list.tsx",
       },
       shared: {
         react: {

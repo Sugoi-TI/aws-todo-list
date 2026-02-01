@@ -1,10 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import TodoForm from "./TodoForm.tsx";
+import TaskForm from "./task-form.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <TodoForm onSuccess={() => null} />
+    <TaskForm onSuccess={() => null} />
   </StrictMode>,
 );

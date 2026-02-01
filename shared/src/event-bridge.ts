@@ -1,22 +1,19 @@
-export enum EventNames {
-  TaskReceived = "TaskReceived",
-  TaskEnriched = "TaskEnriched",
-}
+import type { TaskTable } from "./types/tables-types";
 
-export enum TaskRules {
-  EnrichTaskRule = "EnrichTaskRule",
-  SaveTaskRule = "SaveTaskRule",
-}
+export const EventNames = {
+  TaskReceived: "TaskReceived",
+  TaskEnriched: "TaskEnriched",
+} as const;
+
+export const TaskRules = {
+  EnrichTaskRule: "EnrichTaskRule",
+  SaveTaskRule: "SaveTaskRule",
+} as const;
 
 export const EventSource = "todo.tasks";
 
-export type TaskReceivedPayload = {
+export type TaskReceivedPayload = Pick<TaskTable, "taskId" | "title" | "message"> & {
   userId: string;
-  title: string;
-  message: string;
-  taskId: string;
 };
 
-export type TaskEnrichedPayload = TaskReceivedPayload & {
-  createdAt: string;
-};
+export type TaskEnrichedPayload = TaskReceivedPayload & Pick<TaskTable, "createdAt">;

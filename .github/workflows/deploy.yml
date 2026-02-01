@@ -27,14 +27,14 @@ jobs:
       - name: Install dependencies (Root)
         run: yarn install
 
-      - name: Build Todo Form
+      - name: Build Task Form
         run: |
-          cd frontend/todo-form
+          cd frontend/task-form
           yarn build
 
-      - name: Build Todo List
+      - name: Build Task List
         run: |
-          cd frontend/todo-list
+          cd frontend/task-list
           yarn build
 
       - name: Build Host

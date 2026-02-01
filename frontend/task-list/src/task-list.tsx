@@ -1,38 +1,31 @@
 import { useEffect, useState } from "react";
 import { useApi, useAppStore } from "@my-app/frontend-shared";
-
-type Todo = {
-  id: string;
-  title: string;
-  message: string;
-  status: string;
-  createdAt: string;
-};
+import { type TaskTable } from "@my-app/shared";
 
 type Props = {
   refreshTrigger: number;
 };
 
-const TodoList = ({ refreshTrigger }: Props) => {
-  const [todos, setTodos] = useState<Todo[]>([]);
+const taskList = ({ refreshTrigger }: Props) => {
+  const [tasks, setTasks] = useState<TaskTable[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { theme } = useAppStore();
   const api = useApi();
 
   useEffect(() => {
-    const fetchTodos = async () => {
+    const fetchTasks = async () => {
       setIsLoading(true);
       api("/tasks")
         .then((res) => res.json())
         .then((data) => {
-          console.log("Todos loaded:", data);
-          setTodos(data);
+          console.log("tasks loaded:", data);
+          setTasks(data);
         })
         .catch((err) => console.error("Failed to load tasks", err))
         .finally(() => setIsLoading(false));
     };
 
-    fetchTodos();
+    fetchTasks();
   }, [api, refreshTrigger]);
 
   return (
@@ -42,9 +35,9 @@ const TodoList = ({ refreshTrigger }: Props) => {
       <ul>
         {isLoading
           ? "Loading..."
-          : todos.map((todo) => (
-              <li key={todo.id}>
-                <b>{todo.title}</b>: {todo.message}
+          : tasks.map((task) => (
+              <li key={task.taskId}>
+                <b>{task.title}</b>: {task.message}
               </li>
             ))}
       </ul>
@@ -52,4 +45,4 @@ const TodoList = ({ refreshTrigger }: Props) => {
   );
 };
 
-export default TodoList;
+export default taskList;
