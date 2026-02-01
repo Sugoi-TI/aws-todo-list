@@ -1,6 +1,5 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as lambdaNode from "aws-cdk-lib/aws-lambda-nodejs";
@@ -10,28 +9,18 @@ import * as targets from "aws-cdk-lib/aws-events-targets";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
-import createMicroFrontend from "./utils/createMicroFrontend";
+import createMicroFrontend from "./utils/create-micro-frontend";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import { HttpUserPoolAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { EntityNames } from "./variables";
 import { EventNames, EventSource, TaskRules } from "@my-app/shared";
+import { createDynamoTables } from "./utils/dynamo-db/create-dynamo-tables";
 
 export class InfrastructureStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const table = new dynamodb.Table(this, EntityNames.TasksTable, {
-      partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // free tier (On-demand)
-      // removalPolicy: cdk.RemovalPolicy.DESTROY, // Important for test envs to clean up DB
-    });
-
-    table.addGlobalSecondaryIndex({
-      indexName: "byUserId",
-      partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
-      sortKey: { name: "createdAt", type: dynamodb.AttributeType.STRING },
-      projectionType: dynamodb.ProjectionType.ALL,
-    });
+    const { taskTable, fileTable, userTable } = createDynamoTables(this);
 
     const userPool = new cognito.UserPool(this, EntityNames.TodoUserPool, {
       userPoolName: "todo-user-pool",
@@ -87,7 +76,7 @@ export class InfrastructureStack extends cdk.Stack {
       handler: "handler",
       environment: {
         EVENT_BUS_NAME: eventBus.eventBusName,
-        TABLE_NAME: table.tableName,
+        TABLE_NAME: taskTable.tableName,
       },
     });
 
@@ -96,7 +85,7 @@ export class InfrastructureStack extends cdk.Stack {
       entry: path.join(__dirname, "../../backend/lambdas/task-writer-service/src/index.ts"),
       handler: "handler",
       environment: {
-        TABLE_NAME: table.tableName,
+        TABLE_NAME: taskTable.tableName,
       },
     });
 
@@ -119,8 +108,8 @@ export class InfrastructureStack extends cdk.Stack {
     saveTaskRule.addTarget(new targets.SqsQueue(queue));
     eventBus.grantPutEventsTo(taskService);
     eventBus.grantPutEventsTo(timeService);
-    table.grantWriteData(taskWorker);
-    table.grantReadData(taskService);
+    taskTable.grantWriteData(taskWorker);
+    taskTable.grantReadData(taskService);
     queue.grantConsumeMessages(taskWorker);
     taskWorker.addEventSource(
       new SqsEventSource(queue, {
@@ -173,7 +162,9 @@ export class InfrastructureStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, "queueUrl", { value: queue.queueUrl });
     new cdk.CfnOutput(this, "timeServiceName", { value: timeService.functionName });
-    new cdk.CfnOutput(this, "tableName", { value: table.tableName });
+    new cdk.CfnOutput(this, "taskTableName", { value: taskTable.tableName });
+    new cdk.CfnOutput(this, "userTableName", { value: userTable.tableName });
+    new cdk.CfnOutput(this, "filesTableName", { value: fileTable.tableName });
 
     new cdk.CfnOutput(this, "userPoolId", { value: userPool.userPoolId });
     new cdk.CfnOutput(this, "userPoolClientId", { value: userPoolClient.userPoolClientId });

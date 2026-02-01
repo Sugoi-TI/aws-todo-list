@@ -1,5 +1,7 @@
 export enum EntityNames {
   TasksTable = "TasksTable",
+  UserTable = "UserTable",
+  FilesTable = "FilesTable",
   TodoUserPool = "TodoUserPool",
   TodoUserPoolClient = "TodoUserPoolClient",
   TodoAuthorizer = "TodoAuthorizer",
