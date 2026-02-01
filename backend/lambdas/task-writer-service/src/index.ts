@@ -29,6 +29,10 @@ export const handler = async (event: SQSEvent) => {
       if (isEnrichedEvent(body)) {
         console.log(`Parsing task: (Massage ID: ${record.messageId})`);
 
+        if (body.detail.title === "TEST_ERROR") {
+          throw new Error("Intentional test error to trigger DLQ");
+        }
+
         const command = new PutCommand({
           TableName: TABLE_NAME,
           Item: {

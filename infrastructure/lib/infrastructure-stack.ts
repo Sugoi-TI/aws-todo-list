@@ -57,8 +57,17 @@ export class InfrastructureStack extends cdk.Stack {
       userPoolClients: [userPoolClient],
     });
 
+    const dlq = new sqs.Queue(this, EntityNames.TasksDQL, {
+      retentionPeriod: cdk.Duration.days(14),
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
+    });
+
     const queue = new sqs.Queue(this, EntityNames.TasksQueue, {
-      visibilityTimeout: cdk.Duration.seconds(30), // time to process message
+      visibilityTimeout: cdk.Duration.seconds(30),
+      deadLetterQueue: {
+        queue: dlq,
+        maxReceiveCount: 3,
+      },
     });
 
     const eventBus = new events.EventBus(this, EntityNames.TasksEventBus);
@@ -108,12 +117,10 @@ export class InfrastructureStack extends cdk.Stack {
       },
     });
     saveTaskRule.addTarget(new targets.SqsQueue(queue));
-
     eventBus.grantPutEventsTo(taskService);
     eventBus.grantPutEventsTo(timeService);
     table.grantWriteData(taskWorker);
     table.grantReadData(taskService);
-
     queue.grantConsumeMessages(taskWorker);
     taskWorker.addEventSource(
       new SqsEventSource(queue, {

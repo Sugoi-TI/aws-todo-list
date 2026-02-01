@@ -4,6 +4,7 @@ export enum EntityNames {
   TodoUserPoolClient = "TodoUserPoolClient",
   TodoAuthorizer = "TodoAuthorizer",
   TasksQueue = "TasksQueue",
+  TasksDQL = "TasksDQL",
   TasksEventBus = "TasksEventBus",
   TimeService = "TimeService",
   TaskService = "TaskService",
