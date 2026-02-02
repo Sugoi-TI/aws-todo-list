@@ -127,7 +127,7 @@ export class InfrastructureStack extends cdk.Stack {
 
     const taskWorker = new lambdaNode.NodejsFunction(this, EntityNames.TaskWorker, {
       runtime: lambda.Runtime.NODEJS_20_X,
-      entry: path.join(__dirname, "../../backend/lambdas/task-writer-service/src/index.ts"),
+      entry: path.join(__dirname, "../../backend/lambdas/task-worker/src/index.ts"),
       handler: "handler",
       environment: {
         TABLE_NAME: taskTable.tableName,

@@ -1,7 +1,7 @@
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
 import { S3Event, S3EventRecord } from "aws-lambda";
 import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
-import { EventNames, EventSource } from "@my-app/shared";
+import { EventNames, EventSources } from "@my-app/shared";
 
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME;
 const FILE_TABLE_NAME = process.env.FILE_TABLE_NAME;
@@ -65,7 +65,7 @@ export const handler = async (event: S3Event) => {
       const eventCommand = new PutEventsCommand({
         Entries: [
           {
-            Source: EventSource,
+            Source: EventSources.todoTask,
             DetailType: EventNames.FileUploaded,
             Detail: JSON.stringify({
               fileId,

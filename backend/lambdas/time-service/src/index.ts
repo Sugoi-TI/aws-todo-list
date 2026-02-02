@@ -2,7 +2,7 @@ import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge
 import { EventBridgeEvent } from "aws-lambda";
 import {
   EventNames,
-  EventSource,
+  EventSources,
   type TaskReceivedPayload,
   type TaskEnrichedPayload,
 } from "@my-app/shared";
@@ -28,7 +28,7 @@ export const handler = async (
   const command = new PutEventsCommand({
     Entries: [
       {
-        Source: EventSource,
+        Source: EventSources.todoTask,
         DetailType: EventNames.TaskEnriched,
         Detail: JSON.stringify(taskPayload),
         EventBusName: EVENT_BUS_NAME,

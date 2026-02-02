@@ -15,8 +15,8 @@ import {
   TASK_TABLE,
   type TaskReceivedPayload,
   type GetTasksResponseDto,
-  TaskTable,
-  FileTable,
+  type TaskTable,
+  type FileTable,
 } from "@my-app/shared";
 
 const TASK_TABLE_NAME = process.env.TASK_TABLE_NAME;
