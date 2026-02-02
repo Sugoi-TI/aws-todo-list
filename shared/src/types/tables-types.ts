@@ -13,6 +13,9 @@ export type TaskTable = {
   status: string;
   createdAt: string;
   fileId?: string;
+  fileName?: string;
+  fileType?: string;
+  s3Key?: string;
 };
 
 export const FileStatus = {
@@ -23,7 +26,7 @@ export const FileStatus = {
 export type FileTable = {
   fileId: string;
   userId: string;
-  taskId?: string;
+  taskId: string;
   fileName: string;
   fileSize: number;
   fileType: string;
