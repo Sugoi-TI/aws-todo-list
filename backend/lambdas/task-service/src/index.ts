@@ -1,14 +1,19 @@
 import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from "aws-lambda";
-import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, QueryCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
-import { EventNames, EventSource, TASK_TABLE, type TaskReceivedPayload } from "@my-app/shared";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { EventNames, EventSources, TASK_TABLE, type TaskReceivedPayload } from "@my-app/shared";
 
-const TABLE_NAME = process.env.TABLE_NAME;
+const TASK_TABLE_NAME = process.env.TASK_TABLE_NAME;
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME;
+const FILES_BUCKET_NAME = process.env.FILES_BUCKET_NAME;
+const FILES_TABLE_NAME = process.env.FILES_TABLE_NAME;
 
 const ebClient = new EventBridgeClient({});
 const dynamo = new DynamoDBClient({});
+const s3Client = new S3Client({});
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -22,8 +27,14 @@ export const handler = async (
   if (!EVENT_BUS_NAME) {
     throw new Error("Critical: EVENT_BUS_NAME is not defined in environment variables");
   }
-  if (!TABLE_NAME) {
-    throw new Error("Critical: TABLE_NAME is not defined in environment variables");
+  if (!TASK_TABLE_NAME) {
+    throw new Error("Critical: TASK_TABLE_NAME is not defined in environment variables");
+  }
+  if (!FILES_BUCKET_NAME) {
+    throw new Error("Critical: FILES_BUCKET_NAME is not defined in environment variables");
+  }
+  if (!FILES_TABLE_NAME) {
+    throw new Error("Critical: FILES_TABLE_NAME is not defined in environment variables");
   }
 
   const userId = event.requestContext.authorizer?.jwt.claims.sub as string;
@@ -37,7 +48,7 @@ export const handler = async (
   if (method === "GET") {
     try {
       const command = new QueryCommand({
-        TableName: TABLE_NAME,
+        TableName: TASK_TABLE_NAME,
         IndexName: TASK_TABLE.byUserId,
         KeyConditionExpression: "userId = :uid",
         ExpressionAttributeValues: {
@@ -67,13 +78,13 @@ export const handler = async (
 
   if (method === "POST") {
     let body;
+
     try {
       body = event.body ? JSON.parse(event.body) : {};
     } catch (e) {
       body = event.body;
     }
 
-    // TODO add type into shared folder and type guard it
     if (!body || !body.title || !body.message) {
       return {
         statusCode: 400,
@@ -83,21 +94,58 @@ export const handler = async (
       };
     }
 
+    const taskId = crypto.randomUUID();
     try {
+      let presignedUrl;
+      let fileId = body.fileId;
+
+      if (body.fileName) {
+        fileId = crypto.randomUUID();
+        // Format: userId/fileId-filename
+        const key = `${userId}/${fileId}-${body.fileName}`;
+
+        const putObjectCommand = new PutObjectCommand({
+          Bucket: FILES_BUCKET_NAME,
+          Key: key,
+          ContentType: body.fileType || "application/octet-stream",
+        });
+
+        console.log("Generating presigned URL...");
+        presignedUrl = await getSignedUrl(s3Client, putObjectCommand, { expiresIn: 60 });
+
+        const putItemCommand = new PutItemCommand({
+          TableName: FILES_TABLE_NAME,
+          Item: {
+            fileId: { S: fileId },
+            userId: { S: userId },
+            taskId: { S: taskId },
+            fileName: { S: body.fileName },
+            status: { S: "pending" },
+            createdAt: { S: new Date().toISOString() },
+            s3Key: { S: key },
+            fileSize: { N: body.fileSize ? String(body.fileSize) : "0" },
+            fileType: { S: body.fileType || "application/octet-stream" },
+          },
+        });
+
+        console.log("Writing into File table...");
+        await dynamo.send(putItemCommand);
+      }
+
       console.log("Publishing TaskReceived event...");
 
       const taskPayload: TaskReceivedPayload = {
         userId,
         title: body.title,
         message: body.message,
-        taskId: crypto.randomUUID(),
-        ...(body.fileId && { fileId: body.fileId }),
+        taskId,
+        ...(fileId && { fileId: fileId }),
       };
 
       const command = new PutEventsCommand({
         Entries: [
           {
-            Source: EventSource,
+            Source: EventSources.todoTask,
             DetailType: EventNames.TaskReceived,
             Detail: JSON.stringify(taskPayload),
             EventBusName: EVENT_BUS_NAME,
@@ -115,6 +163,8 @@ export const handler = async (
           message: "Task accepted for processing",
           eventId: result.Entries?.[0].EventId,
           taskId: taskPayload.taskId,
+          presignedUrl, // Return the URL
+          fileId,
         }),
         headers,
       };

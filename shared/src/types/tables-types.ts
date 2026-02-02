@@ -12,6 +12,7 @@ export type TaskTable = {
   message: string;
   status: string;
   createdAt: string;
+  fileId?: string;
 };
 
 export const FileStatus = {
@@ -22,7 +23,7 @@ export const FileStatus = {
 export type FileTable = {
   fileId: string;
   userId: string;
-  taskId: string;
+  taskId?: string;
   fileName: string;
   fileSize: number;
   fileType: string;

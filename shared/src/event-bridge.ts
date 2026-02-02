@@ -12,10 +12,14 @@ export const TaskRules = {
   FileUploadRule: "FileUploadRule",
 } as const;
 
-export const EventSource = "todo.tasks";
+export const EventSources = {
+  todoTask: "todo.task",
+  S3Source: "aws.s3",
+} as const;
 
 export type TaskReceivedPayload = Pick<TaskTable, "taskId" | "title" | "message"> & {
   userId: string;
+  fileId?: string;
 };
 
 export type TaskEnrichedPayload = TaskReceivedPayload & Pick<TaskTable, "createdAt">;

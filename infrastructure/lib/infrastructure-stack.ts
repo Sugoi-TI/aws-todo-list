@@ -1,6 +1,5 @@
 import * as cdk from "aws-cdk-lib";
 import * as s3 from "aws-cdk-lib/aws-s3";
-import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 import { Construct } from "constructs";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
@@ -15,7 +14,7 @@ import createMicroFrontend from "./utils/create-micro-frontend";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import { HttpUserPoolAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { EntityNames } from "./variables";
-import { EventNames, EventSource, TaskRules } from "@my-app/shared";
+import { EventNames, TaskRules, EventSources } from "@my-app/shared";
 import { createDynamoTables } from "./utils/create-dynamo-tables";
 
 export class InfrastructureStack extends cdk.Stack {
@@ -24,10 +23,19 @@ export class InfrastructureStack extends cdk.Stack {
 
     const { taskTable, fileTable, userTable } = createDynamoTables(this);
 
+    // 1. Create S3 Bucket with EventBridge enabled
     const fileBucket = new s3.Bucket(this, EntityNames.FilesBucket, {
       versioned: true,
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      eventBridgeEnabled: true,
+      cors: [
+        {
+          allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET, s3.HttpMethods.HEAD],
+          allowedOrigins: ["*"],
+          allowedHeaders: ["*"],
+        },
+      ],
       lifecycleRules: [
         {
           expiration: cdk.Duration.days(30),
@@ -75,6 +83,27 @@ export class InfrastructureStack extends cdk.Stack {
 
     const eventBus = new events.EventBus(this, EntityNames.TasksEventBus);
 
+    const defaultBus = events.EventBus.fromEventBusName(
+      this,
+      EntityNames.DefaultBus,
+      EntityNames.DefaultBus,
+    );
+
+    const s3ForwardRule = new events.Rule(this, "ForwardS3EventsRule", {
+      eventBus: defaultBus,
+      eventPattern: {
+        source: [EventSources.S3Source],
+        detailType: ["Object Created"],
+        detail: {
+          bucket: {
+            name: [fileBucket.bucketName],
+          },
+        },
+      },
+    });
+
+    s3ForwardRule.addTarget(new targets.EventBus(eventBus));
+
     const timeService = new lambdaNode.NodejsFunction(this, EntityNames.TimeService, {
       runtime: lambda.Runtime.NODEJS_20_X,
       entry: path.join(__dirname, "../../backend/lambdas/time-service/src/index.ts"),
@@ -90,7 +119,9 @@ export class InfrastructureStack extends cdk.Stack {
       handler: "handler",
       environment: {
         EVENT_BUS_NAME: eventBus.eventBusName,
-        TABLE_NAME: taskTable.tableName,
+        TASK_TABLE_NAME: taskTable.tableName,
+        FILES_BUCKET_NAME: fileBucket.bucketName,
+        FILES_TABLE_NAME: fileTable.tableName,
       },
     });
 
@@ -114,19 +145,18 @@ export class InfrastructureStack extends cdk.Stack {
 
     const fileWorker = new lambdaNode.NodejsFunction(this, EntityNames.FileWorker, {
       runtime: lambda.Runtime.NODEJS_20_X,
-      entry: path.join(__dirname, "../../backend/lambdas/files-worker/src/index.ts"),
+      entry: path.join(__dirname, "../../backend/lambdas/file-worker/src/index.ts"),
       handler: "handler",
       environment: {
         EVENT_BUS_NAME: eventBus.eventBusName,
-        FILE_BUCKET_NAME: fileBucket.bucketName,
-        TASK_TABLE_NAME: taskTable.tableName,
+        FILE_TABLE_NAME: fileTable.tableName,
       },
     });
 
     const enrichTaskRule = new events.Rule(this, TaskRules.EnrichTaskRule, {
       eventBus: eventBus,
       eventPattern: {
-        source: [EventSource],
+        source: [EventSources.todoTask],
         detailType: [EventNames.TaskReceived],
       },
     });
@@ -135,7 +165,7 @@ export class InfrastructureStack extends cdk.Stack {
     const saveTaskRule = new events.Rule(this, TaskRules.SaveTaskRule, {
       eventBus: eventBus,
       eventPattern: {
-        source: [EventSource],
+        source: [EventSources.todoTask],
         detailType: [EventNames.TaskEnriched],
       },
     });
@@ -143,8 +173,8 @@ export class InfrastructureStack extends cdk.Stack {
     const fileUploadRule = new events.Rule(this, TaskRules.FileUploadRule, {
       eventBus: eventBus,
       eventPattern: {
-        source: ["aws.s3"],
-        detailType: [EventNames.FileUploaded],
+        source: [EventSources.S3Source],
+        detailType: ["Object Created"],
         detail: {
           bucket: {
             name: [fileBucket.bucketName],
@@ -152,12 +182,16 @@ export class InfrastructureStack extends cdk.Stack {
         },
       },
     });
+    fileUploadRule.addTarget(new targets.LambdaFunction(fileWorker));
 
     saveTaskRule.addTarget(new targets.SqsQueue(queue));
     eventBus.grantPutEventsTo(taskService);
     eventBus.grantPutEventsTo(timeService);
+    eventBus.grantPutEventsTo(fileWorker);
+
     taskTable.grantWriteData(taskWorker);
     taskTable.grantReadData(taskService);
+
     queue.grantConsumeMessages(taskWorker);
     taskWorker.addEventSource(
       new SqsEventSource(queue, {
@@ -168,8 +202,9 @@ export class InfrastructureStack extends cdk.Stack {
     userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, userService);
 
     fileTable.grantWriteData(fileWorker);
+    fileTable.grantWriteData(taskService);
+    fileBucket.grantWrite(taskService);
     fileBucket.grantRead(fileWorker);
-    eventBus.grantPutEventsTo(fileWorker);
 
     const api = new apigw.HttpApi(this, EntityNames.TodoApi, {
       corsPreflight: {
@@ -219,6 +254,7 @@ export class InfrastructureStack extends cdk.Stack {
     new cdk.CfnOutput(this, "taskTableName", { value: taskTable.tableName });
     new cdk.CfnOutput(this, "userTableName", { value: userTable.tableName });
     new cdk.CfnOutput(this, "filesTableName", { value: fileTable.tableName });
+    new cdk.CfnOutput(this, "filesBucketName", { value: fileBucket.bucketName });
 
     new cdk.CfnOutput(this, "userPoolId", { value: userPool.userPoolId });
     new cdk.CfnOutput(this, "userPoolClientId", { value: userPoolClient.userPoolClientId });

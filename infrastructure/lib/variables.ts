@@ -15,5 +15,7 @@ export const EntityNames = {
   TaskWorker: "TaskWorker",
   FileWorker: "FileWorker",
   TaskCreatedRule: "TaskCreatedRule",
+  FileUploadRule: "FileUploadRule",
   TodoApi: "TodoApi",
+  DefaultBus: "default",
 } as const;
