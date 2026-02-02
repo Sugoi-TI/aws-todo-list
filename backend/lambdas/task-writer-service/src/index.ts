@@ -1,7 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { EventBridgeEvent, SQSEvent } from "aws-lambda";
-import { EventNames, type TaskEnrichedPayload } from "@my-app/shared";
+import { EventNames, type TaskEnrichedPayload, type TaskTable } from "@my-app/shared";
 
 type UnknownEvent = EventBridgeEvent<string, any>;
 type EnrichedEvent = EventBridgeEvent<(typeof EventNames)["TaskEnriched"], TaskEnrichedPayload>;
@@ -33,16 +33,18 @@ export const handler = async (event: SQSEvent) => {
           throw new Error("Intentional test error to trigger DLQ");
         }
 
+        const commandItem: TaskTable = {
+          taskId: body.detail.taskId,
+          userId: body.detail.userId,
+          title: body.detail.title,
+          message: body.detail.message,
+          createdAt: body.detail.createdAt,
+          status: "NEW",
+        };
+
         const command = new PutCommand({
           TableName: TABLE_NAME,
-          Item: {
-            taskId: body.detail.taskId,
-            userId: body.detail.userId,
-            title: body.detail.title,
-            message: body.detail.message,
-            createdAt: body.detail.createdAt,
-            status: "NEW",
-          },
+          Item: commandItem,
         });
 
         await docClient.send(command);

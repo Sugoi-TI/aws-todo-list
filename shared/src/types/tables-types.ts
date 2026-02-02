@@ -7,6 +7,7 @@ export type UserTable = {
 
 export type TaskTable = {
   taskId: string;
+  userId: string;
   title: string;
   message: string;
   status: string;
