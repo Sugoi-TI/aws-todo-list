@@ -3,11 +3,13 @@ import type { TaskTable } from "./types/tables-types";
 export const EventNames = {
   TaskReceived: "TaskReceived",
   TaskEnriched: "TaskEnriched",
+  FileUploaded: "FileUploaded",
 } as const;
 
 export const TaskRules = {
   EnrichTaskRule: "EnrichTaskRule",
   SaveTaskRule: "SaveTaskRule",
+  FileUploadRule: "FileUploadRule",
 } as const;
 
 export const EventSource = "todo.tasks";
@@ -17,3 +19,11 @@ export type TaskReceivedPayload = Pick<TaskTable, "taskId" | "title" | "message"
 };
 
 export type TaskEnrichedPayload = TaskReceivedPayload & Pick<TaskTable, "createdAt">;
+
+export type FileUploadedPayload = {
+  userId: string;
+  taskId: string;
+  fileId: string;
+  s3Key: string;
+  fileName: string;
+};

@@ -2,6 +2,7 @@ export const EntityNames = {
   TasksTable: "TasksTable",
   UserTable: "UserTable",
   FilesTable: "FilesTable",
+  FilesBucket: "FilesBucket",
   TodoUserPool: "TodoUserPool",
   TodoUserPoolClient: "TodoUserPoolClient",
   TodoAuthorizer: "TodoAuthorizer",
@@ -12,6 +13,7 @@ export const EntityNames = {
   TaskService: "TaskService",
   UserService: "UserService",
   TaskWorker: "TaskWorker",
+  FileWorker: "FileWorker",
   TaskCreatedRule: "TaskCreatedRule",
   TodoApi: "TodoApi",
 } as const;

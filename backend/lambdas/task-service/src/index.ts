@@ -73,6 +73,7 @@ export const handler = async (
       body = event.body;
     }
 
+    // TODO add type into shared folder and type guard it
     if (!body || !body.title || !body.message) {
       return {
         statusCode: 400,
@@ -90,6 +91,7 @@ export const handler = async (
         title: body.title,
         message: body.message,
         taskId: crypto.randomUUID(),
+        ...(body.fileId && { fileId: body.fileId }),
       };
 
       const command = new PutEventsCommand({

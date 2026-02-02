@@ -1,4 +1,6 @@
 import * as cdk from "aws-cdk-lib";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 import { Construct } from "constructs";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
@@ -21,6 +23,18 @@ export class InfrastructureStack extends cdk.Stack {
     super(scope, id, props);
 
     const { taskTable, fileTable, userTable } = createDynamoTables(this);
+
+    const fileBucket = new s3.Bucket(this, EntityNames.FilesBucket, {
+      versioned: true,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      lifecycleRules: [
+        {
+          expiration: cdk.Duration.days(30),
+          noncurrentVersionExpiration: cdk.Duration.days(7),
+        },
+      ],
+    });
 
     const userPool = new cognito.UserPool(this, EntityNames.TodoUserPool, {
       userPoolName: "todo-user-pool",
@@ -98,6 +112,17 @@ export class InfrastructureStack extends cdk.Stack {
       },
     });
 
+    const fileWorker = new lambdaNode.NodejsFunction(this, EntityNames.FileWorker, {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, "../../backend/lambdas/files-worker/src/index.ts"),
+      handler: "handler",
+      environment: {
+        EVENT_BUS_NAME: eventBus.eventBusName,
+        FILE_BUCKET_NAME: fileBucket.bucketName,
+        TASK_TABLE_NAME: taskTable.tableName,
+      },
+    });
+
     const enrichTaskRule = new events.Rule(this, TaskRules.EnrichTaskRule, {
       eventBus: eventBus,
       eventPattern: {
@@ -115,6 +140,19 @@ export class InfrastructureStack extends cdk.Stack {
       },
     });
 
+    const fileUploadRule = new events.Rule(this, TaskRules.FileUploadRule, {
+      eventBus: eventBus,
+      eventPattern: {
+        source: ["aws.s3"],
+        detailType: [EventNames.FileUploaded],
+        detail: {
+          bucket: {
+            name: [fileBucket.bucketName],
+          },
+        },
+      },
+    });
+
     saveTaskRule.addTarget(new targets.SqsQueue(queue));
     eventBus.grantPutEventsTo(taskService);
     eventBus.grantPutEventsTo(timeService);
@@ -128,6 +166,10 @@ export class InfrastructureStack extends cdk.Stack {
     );
     userTable.grantWriteData(userService);
     userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, userService);
+
+    fileTable.grantWriteData(fileWorker);
+    fileBucket.grantRead(fileWorker);
+    eventBus.grantPutEventsTo(fileWorker);
 
     const api = new apigw.HttpApi(this, EntityNames.TodoApi, {
       corsPreflight: {
