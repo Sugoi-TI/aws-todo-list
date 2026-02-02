@@ -1,10 +1,23 @@
 import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from "aws-lambda";
-import { DynamoDBClient, QueryCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBClient,
+  QueryCommand,
+  PutItemCommand,
+  GetItemCommand,
+} from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { EventNames, EventSources, TASK_TABLE, type TaskReceivedPayload } from "@my-app/shared";
+import {
+  EventNames,
+  EventSources,
+  TASK_TABLE,
+  type TaskReceivedPayload,
+  type GetTasksResponseDto,
+  TaskTable,
+  FileTable,
+} from "@my-app/shared";
 
 const TASK_TABLE_NAME = process.env.TASK_TABLE_NAME;
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME;
@@ -59,12 +72,49 @@ export const handler = async (
 
       const result = await dynamo.send(command);
 
-      const tasks = result.Items ? result.Items.map((item) => unmarshall(item)) : [];
+      const tasks = result.Items
+        ? (result.Items.map((item) => unmarshall(item)) as TaskTable[])
+        : [];
+
+      const tasksWithFiles: GetTasksResponseDto = [];
+
+      for (const task of tasks) {
+        if (task.fileId) {
+          try {
+            const fileCommand = new GetItemCommand({
+              TableName: FILES_TABLE_NAME,
+              Key: {
+                fileId: { S: task.fileId },
+              },
+            });
+
+            const fileResult = await dynamo.send(fileCommand);
+
+            if (fileResult.Item) {
+              const fileData = unmarshall(fileResult.Item) as FileTable;
+
+              tasksWithFiles.push({
+                ...task,
+                fileName: fileData.fileName,
+                fileType: fileData.fileType,
+                s3Key: fileData.s3Key,
+              });
+            } else {
+              tasksWithFiles.push(task);
+            }
+          } catch (error) {
+            console.error("Error fetching file data for task: ", task.taskId, error);
+            tasksWithFiles.push(task);
+          }
+        } else {
+          tasksWithFiles.push(task);
+        }
+      }
 
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify(tasks),
+        body: JSON.stringify(tasksWithFiles),
       };
     } catch (error) {
       console.error("DynamoDB Read Error:", error);
