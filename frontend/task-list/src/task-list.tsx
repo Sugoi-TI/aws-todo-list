@@ -41,7 +41,7 @@ const taskList = ({ refreshTrigger }: Props) => {
                 {task.s3Key && (
                   <div>
                     <img
-                      src={`https://my-bucket.s3.amazonaws.com/${task.s3Key}`}
+                      src={task.s3Key}
                       alt={task.fileName || "Task attachment"}
                       style={{ maxWidth: "200px", maxHeight: "200px", marginTop: "10px" }}
                     />
