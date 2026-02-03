@@ -76,6 +76,7 @@ export const handler = async (
         ? (result.Items.map((item) => unmarshall(item)) as TaskTable[])
         : [];
 
+      console.log(tasks);
       const tasksWithFiles: GetTasksResponseDto = [];
 
       for (const task of tasks) {
@@ -90,8 +91,10 @@ export const handler = async (
 
             const fileResult = await dynamo.send(fileCommand);
 
+            console.log("TEMP file result: ", fileResult);
             if (fileResult.Item) {
               const fileData = unmarshall(fileResult.Item) as FileTable;
+              console.log("Found file: ", fileData);
 
               tasksWithFiles.push({
                 ...task,
