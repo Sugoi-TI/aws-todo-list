@@ -205,6 +205,7 @@ export class InfrastructureStack extends cdk.Stack {
     fileTable.grantWriteData(taskService);
     fileTable.grantReadData(taskService);
     fileBucket.grantWrite(taskService);
+    fileBucket.grantRead(taskService);
     fileBucket.grantRead(fileWorker);
 
     const api = new apigw.HttpApi(this, EntityNames.TodoApi, {
