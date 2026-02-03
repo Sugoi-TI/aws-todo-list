@@ -24,6 +24,7 @@ export const handler = async (event: SQSEvent) => {
 
   for (const record of event.Records) {
     try {
+      // TODO properly type it
       const body = JSON.parse(record.body);
 
       if (isEnrichedEvent(body)) {
@@ -33,6 +34,7 @@ export const handler = async (event: SQSEvent) => {
           throw new Error("Intentional test error to trigger DLQ");
         }
 
+        // TODO spread
         const commandItem: TaskTable = {
           taskId: body.detail.taskId,
           userId: body.detail.userId,
