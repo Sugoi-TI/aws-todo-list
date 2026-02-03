@@ -1,7 +1,7 @@
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
-import type { EventBridgeEvent } from "aws-lambda";
+import { EventBridgeEvent } from "aws-lambda";
 import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
-import { EventNames, EventSources, type S3EventBridgeDetail } from "@my-app/shared";
+import { EventNames, EventSources, FileStatus, type S3EventBridgeDetail } from "@my-app/shared";
 
 export type S3EventBridgeEvent = EventBridgeEvent<"Object Created", S3EventBridgeDetail>;
 
@@ -27,16 +27,12 @@ export const handler = async (event: S3EventBridgeEvent) => {
     const key = decodeURIComponent(event.detail.object.key.replace(/\+/g, " "));
 
     const parts = key.split("/");
-    if (parts.length < 2) {
-      console.warn(`Skipping key with unexpected format: ${key}`);
+    if (parts.length < 3) {
+      console.warn(`Skipping keys with unexpected format: ${key}`);
     }
-    const fileNamePart = parts[1];
-    const firstHyphenIndex = fileNamePart.indexOf("-");
-    if (firstHyphenIndex === -1) {
-      console.warn(`Skipping file name with unexpected format: ${fileNamePart}`);
-    }
-
-    const fileId = fileNamePart.substring(0, firstHyphenIndex);
+    const userId = parts[0];
+    const fileId = parts[1];
+    const fileName = parts[2];
 
     console.log(`Processing fileId: ${fileId} for key: ${key}`);
 
@@ -64,10 +60,10 @@ export const handler = async (event: S3EventBridgeEvent) => {
           DetailType: EventNames.FileUploaded,
           Detail: JSON.stringify({
             fileId,
-            userId: parts[0],
+            userId,
             s3Key: key,
-            status: "uploaded",
-            fileName: fileNamePart.substring(firstHyphenIndex + 1),
+            status: FileStatus.Uploaded,
+            fileName,
             bucketName,
           }),
           EventBusName: EVENT_BUS_NAME,

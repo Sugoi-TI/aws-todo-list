@@ -151,8 +151,8 @@ export const handler = async (
 
       if (body.fileName) {
         fileId = crypto.randomUUID();
-        // Format: userId/fileId-filename
-        const key = `${userId}/${fileId}-${body.fileName}`;
+        // Format: userId/fileId/filename
+        const key = `${userId}/${fileId}/${body.fileName}`;
 
         const putObjectCommand = new PutObjectCommand({
           Bucket: FILES_BUCKET_NAME,
