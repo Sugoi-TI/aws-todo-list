@@ -73,6 +73,9 @@ const TaskForm = ({ onSuccess }: Props) => {
 
       const { taskId, presignedUrl, fileId } = await response.json();
 
+      console.log(presignedUrl);
+      console.log(file);
+
       if (presignedUrl && file) {
         // S3 presigned URL is pre-signed, so we don't need Authorization
         const uploadResponse = await fetch(presignedUrl, {
