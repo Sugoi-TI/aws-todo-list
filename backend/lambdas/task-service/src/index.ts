@@ -7,7 +7,7 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
   EventNames,
@@ -76,7 +76,6 @@ export const handler = async (
         ? (result.Items.map((item) => unmarshall(item)) as TaskTable[])
         : [];
 
-      console.log(tasks);
       const tasksWithFiles: GetTasksResponseDto = [];
 
       for (const task of tasks) {
@@ -91,16 +90,22 @@ export const handler = async (
 
             const fileResult = await dynamo.send(fileCommand);
 
-            console.log("TEMP file result: ", fileResult);
             if (fileResult.Item) {
               const fileData = unmarshall(fileResult.Item) as FileTable;
               console.log("Found file: ", fileData);
+
+              const command = new GetObjectCommand({
+                Bucket: FILES_BUCKET_NAME,
+                Key: fileData.s3Key,
+              });
+
+              const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 100 });
 
               tasksWithFiles.push({
                 ...task,
                 fileName: fileData.fileName,
                 fileType: fileData.fileType,
-                s3Key: fileData.s3Key,
+                s3Key: signedUrl,
               });
             } else {
               tasksWithFiles.push(task);
