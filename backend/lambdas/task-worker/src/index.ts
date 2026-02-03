@@ -40,6 +40,7 @@ export const handler = async (event: SQSEvent) => {
           message: body.detail.message,
           createdAt: body.detail.createdAt,
           status: "NEW",
+          fileId: body.detail?.fileId,
         };
 
         const command = new PutCommand({
