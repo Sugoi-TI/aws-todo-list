@@ -203,6 +203,7 @@ export class InfrastructureStack extends cdk.Stack {
 
     fileTable.grantWriteData(fileWorker);
     fileTable.grantWriteData(taskService);
+    fileTable.grantReadData(taskService);
     fileBucket.grantWrite(taskService);
     fileBucket.grantRead(fileWorker);
 
