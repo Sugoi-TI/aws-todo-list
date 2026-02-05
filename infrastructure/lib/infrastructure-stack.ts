@@ -175,7 +175,7 @@ export class InfrastructureStack extends cdk.Stack {
       eventBus: eventBus,
       eventPattern: {
         source: [EventSources.task],
-        detailType: [EventNames.TaskReceived],
+        detailType: [EventNames.TaskReceived, EventNames.TaskUpdated],
       },
     });
     enrichTaskRule.addTarget(new targets.LambdaFunction(timeService));
@@ -187,6 +187,16 @@ export class InfrastructureStack extends cdk.Stack {
         detailType: [EventNames.TaskEnriched],
       },
     });
+    saveTaskRule.addTarget(new targets.SqsQueue(queue));
+
+    const deleteTaskRule = new events.Rule(this, TaskRules.DeleteTaskRule, {
+      eventBus: eventBus,
+      eventPattern: {
+        source: [EventSources.task],
+        detailType: [EventNames.TaskToDelete],
+      },
+    });
+    deleteTaskRule.addTarget(new targets.LambdaFunction(taskWorker));
 
     // const taskSavedRule = new events.Rule(this, TaskRules.TaskSavedRule, {
     //   eventBus: eventBus,
@@ -210,7 +220,6 @@ export class InfrastructureStack extends cdk.Stack {
     });
     fileUploadRule.addTarget(new targets.LambdaFunction(fileWorker));
 
-    saveTaskRule.addTarget(new targets.SqsQueue(queue));
     eventBus.grantPutEventsTo(taskService);
     eventBus.grantPutEventsTo(timeService);
     eventBus.grantPutEventsTo(fileWorker);

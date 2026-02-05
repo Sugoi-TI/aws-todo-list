@@ -12,6 +12,8 @@ export const EventNames = {
 export const TaskRules = {
   EnrichTaskRule: "EnrichTaskRule",
   SaveTaskRule: "SaveTaskRule",
+  DeleteTaskRule: "DeleteTaskRule",
+  UpdateTaskRule: "UpdateTaskRule",
   TaskSavedRule: "TaskSavedRule",
   FileUploadRule: "FileUploadRule",
 } as const;
