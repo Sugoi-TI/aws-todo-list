@@ -3,12 +3,11 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as lambdaNode from "aws-cdk-lib/aws-lambda-nodejs";
 import * as apigw from "aws-cdk-lib/aws-apigatewayv2";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import { DynamoEventSource, SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
 import createMicroFrontend from "./utils/create-micro-frontend";
 import * as cognito from "aws-cdk-lib/aws-cognito";
@@ -104,19 +103,19 @@ export class InfrastructureStack extends cdk.Stack {
 
     s3ForwardRule.addTarget(new targets.EventBus(eventBus));
 
-    const timeService = new lambdaNode.NodejsFunction(this, EntityNames.TimeService, {
+    const timeService = new lambda.Function(this, EntityNames.TimeService, {
       runtime: lambda.Runtime.NODEJS_20_X,
-      entry: path.join(__dirname, "../../backend/lambdas/time-service/src/index.ts"),
-      handler: "handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../../backend/lambdas/time-service/dist")),
+      handler: "index.handler",
       environment: {
         EVENT_BUS_NAME: eventBus.eventBusName,
       },
     });
 
-    const taskService = new lambdaNode.NodejsFunction(this, EntityNames.TaskService, {
+    const taskService = new lambda.Function(this, EntityNames.TaskService, {
       runtime: lambda.Runtime.NODEJS_20_X,
-      entry: path.join(__dirname, "../../backend/lambdas/task-service/src/index.ts"),
-      handler: "handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../../backend/lambdas/task-service/dist")),
+      handler: "index.handler",
       environment: {
         EVENT_BUS_NAME: eventBus.eventBusName,
         TASK_TABLE_NAME: taskTable.tableName,
@@ -125,10 +124,10 @@ export class InfrastructureStack extends cdk.Stack {
       },
     });
 
-    const taskWorker = new lambdaNode.NodejsFunction(this, EntityNames.TaskWorker, {
+    const taskWorker = new lambda.Function(this, EntityNames.TaskWorker, {
       runtime: lambda.Runtime.NODEJS_20_X,
-      entry: path.join(__dirname, "../../backend/lambdas/task-worker/src/index.ts"),
-      handler: "handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../../backend/lambdas/task-worker/dist")),
+      handler: "index.handler",
       environment: {
         TASK_TABLE_NAME: taskTable.tableName,
         FILE_TABLE_NAME: fileTable.tableName,
@@ -152,19 +151,19 @@ export class InfrastructureStack extends cdk.Stack {
     //   }),
     // );
 
-    const userService = new lambdaNode.NodejsFunction(this, EntityNames.UserService, {
+    const userService = new lambda.Function(this, EntityNames.UserService, {
       runtime: lambda.Runtime.NODEJS_20_X,
-      entry: path.join(__dirname, "../../backend/lambdas/user-service/src/index.ts"),
-      handler: "handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../../backend/lambdas/user-service/dist")),
+      handler: "index.handler",
       environment: {
         TABLE_NAME: userTable.tableName,
       },
     });
 
-    const fileWorker = new lambdaNode.NodejsFunction(this, EntityNames.FileWorker, {
+    const fileWorker = new lambda.Function(this, EntityNames.FileWorker, {
       runtime: lambda.Runtime.NODEJS_20_X,
-      entry: path.join(__dirname, "../../backend/lambdas/file-worker/src/index.ts"),
-      handler: "handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../../backend/lambdas/file-worker/dist")),
+      handler: "index.handler",
       environment: {
         EVENT_BUS_NAME: eventBus.eventBusName,
         FILE_TABLE_NAME: fileTable.tableName,

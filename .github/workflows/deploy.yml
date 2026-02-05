@@ -27,20 +27,8 @@ jobs:
       - name: Install dependencies (Root)
         run: yarn install
 
-      - name: Build Task Form
-        run: |
-          cd frontend/task-form
-          yarn build
-
-      - name: Build Task List
-        run: |
-          cd frontend/task-list
-          yarn build
-
-      - name: Build Host
-        run: |
-          cd frontend/host
-          yarn build
+      - name: Build Project (Turbo)
+        run: yarn build
         env:
           VITE_FORM_URL: ${{ vars.VITE_FORM_URL }}
           VITE_LIST_URL: ${{ vars.VITE_LIST_URL }}
