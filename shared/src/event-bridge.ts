@@ -2,27 +2,39 @@ import type { TaskTable } from "./types/tables-types";
 
 export const EventNames = {
   TaskReceived: "TaskReceived",
+  TaskUpdated: "TaskUpdated",
+  TaskToDelete: "TaskToDelete",
   TaskEnriched: "TaskEnriched",
+  TaskSaved: "TaskSaved",
   FileUploaded: "FileUploaded",
 } as const;
 
 export const TaskRules = {
   EnrichTaskRule: "EnrichTaskRule",
   SaveTaskRule: "SaveTaskRule",
+  TaskSavedRule: "TaskSavedRule",
   FileUploadRule: "FileUploadRule",
 } as const;
 
 export const EventSources = {
-  todoTask: "todo.task",
+  task: "todo.task",
   S3Source: "aws.s3",
 } as const;
 
-export type TaskReceivedPayload = Pick<TaskTable, "taskId" | "title" | "message"> & {
+// TODO rename to reflect edit case
+export type TaskReceivedPayload = Pick<
+  TaskTable,
+  "taskId" | "title" | "message" | "createdAt" | "lastUpdateAt"
+> & {
   userId: string;
   fileId?: string;
 };
 
-export type TaskEnrichedPayload = TaskReceivedPayload & Pick<TaskTable, "createdAt">;
+export type TaskEnrichedPayload = TaskReceivedPayload;
+
+export type TaskSavedPayload = TaskTable;
+
+export type TaskToDeletePayload = Pick<TaskTable, "taskId" | "fileId">;
 
 export type FileUploadedPayload = {
   userId: string;

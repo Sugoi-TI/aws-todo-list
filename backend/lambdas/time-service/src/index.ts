@@ -11,7 +11,7 @@ const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME;
 const ebClient = new EventBridgeClient({});
 
 export const handler = async (
-  event: EventBridgeEvent<(typeof EventNames)["TaskReceived"], TaskReceivedPayload>,
+  event: EventBridgeEvent<(typeof EventNames)["TaskReceived" | "TaskUpdated"], TaskReceivedPayload>,
 ) => {
   if (!EVENT_BUS_NAME) {
     throw new Error("Critical: EVENT_BUS_NAME is not defined in environment variables");
@@ -20,15 +20,28 @@ export const handler = async (
   const now = new Date().toISOString();
   console.log("Generating time:", now);
 
-  const taskPayload: TaskEnrichedPayload = {
-    ...event.detail,
-    createdAt: now,
-  };
+  let taskPayload: TaskEnrichedPayload = event.detail;
+
+  if (event["detail-type"] === EventNames.TaskReceived) {
+    console.log("Processing TaskReceived event");
+    taskPayload = {
+      ...event.detail,
+      createdAt: now,
+    };
+  }
+  if (event["detail-type"] === EventNames.TaskUpdated) {
+    console.log("Processing TaskUpdated event");
+
+    taskPayload = {
+      ...event.detail,
+      lastUpdateAt: now,
+    };
+  }
 
   const command = new PutEventsCommand({
     Entries: [
       {
-        Source: EventSources.todoTask,
+        Source: EventSources.task,
         DetailType: EventNames.TaskEnriched,
         Detail: JSON.stringify(taskPayload),
         EventBusName: EVENT_BUS_NAME,

@@ -56,7 +56,7 @@ const taskList = ({ refreshTrigger }: Props) => {
 
     try {
       const response = await api(`/tasks/${editingTaskId}`, {
-        method: "POST",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },

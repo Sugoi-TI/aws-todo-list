@@ -12,6 +12,7 @@ export type TaskTable = {
   message: string;
   status: string;
   createdAt: string;
+  lastUpdateAt?: string;
   fileId?: string;
 };
 

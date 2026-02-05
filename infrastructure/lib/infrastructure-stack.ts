@@ -8,7 +8,7 @@ import * as apigw from "aws-cdk-lib/aws-apigatewayv2";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import { DynamoEventSource, SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import * as path from "path";
 import createMicroFrontend from "./utils/create-micro-frontend";
 import * as cognito from "aws-cdk-lib/aws-cognito";
@@ -130,9 +130,27 @@ export class InfrastructureStack extends cdk.Stack {
       entry: path.join(__dirname, "../../backend/lambdas/task-worker/src/index.ts"),
       handler: "handler",
       environment: {
-        TABLE_NAME: taskTable.tableName,
+        TASK_TABLE_NAME: taskTable.tableName,
+        FILE_TABLE_NAME: fileTable.tableName,
+        FILES_BUCKET_NAME: fileBucket.bucketName,
       },
     });
+
+    // const taskStreamWorker = new lambdaNode.NodejsFunction(this, EntityNames.TaskStreamWorker, {
+    //   runtime: lambda.Runtime.NODEJS_20_X,
+    //   entry: path.join(__dirname, "../../backend/lambdas/task-stream-worker/src/index.ts"),
+    //   handler: "handler",
+    //   environment: {
+    //     EVENT_BUS_NAME: eventBus.eventBusName,
+    //   },
+    // });
+    // taskStreamWorker.addEventSource(
+    //   new DynamoEventSource(taskTable, {
+    //     startingPosition: lambda.StartingPosition.TRIM_HORIZON,
+    //     batchSize: 1,
+    //     retryAttempts: 2,
+    //   }),
+    // );
 
     const userService = new lambdaNode.NodejsFunction(this, EntityNames.UserService, {
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -156,7 +174,7 @@ export class InfrastructureStack extends cdk.Stack {
     const enrichTaskRule = new events.Rule(this, TaskRules.EnrichTaskRule, {
       eventBus: eventBus,
       eventPattern: {
-        source: [EventSources.todoTask],
+        source: [EventSources.task],
         detailType: [EventNames.TaskReceived],
       },
     });
@@ -165,10 +183,18 @@ export class InfrastructureStack extends cdk.Stack {
     const saveTaskRule = new events.Rule(this, TaskRules.SaveTaskRule, {
       eventBus: eventBus,
       eventPattern: {
-        source: [EventSources.todoTask],
+        source: [EventSources.task],
         detailType: [EventNames.TaskEnriched],
       },
     });
+
+    // const taskSavedRule = new events.Rule(this, TaskRules.TaskSavedRule, {
+    //   eventBus: eventBus,
+    //   eventPattern: {
+    //     source: [EventSources.task],
+    //     detailType: [EventNames.TaskSaved],
+    //   },
+    // });
 
     const fileUploadRule = new events.Rule(this, TaskRules.FileUploadRule, {
       eventBus: eventBus,
@@ -188,6 +214,7 @@ export class InfrastructureStack extends cdk.Stack {
     eventBus.grantPutEventsTo(taskService);
     eventBus.grantPutEventsTo(timeService);
     eventBus.grantPutEventsTo(fileWorker);
+    // eventBus.grantPutEventsTo(taskStreamWorker);
 
     taskTable.grantWriteData(taskWorker);
     taskTable.grantReadData(taskService);
@@ -204,7 +231,10 @@ export class InfrastructureStack extends cdk.Stack {
     fileTable.grantWriteData(fileWorker);
     fileTable.grantWriteData(taskService);
     fileTable.grantReadData(taskService);
+    fileTable.grantWriteData(taskWorker);
+    fileTable.grantReadData(taskWorker);
     fileBucket.grantWrite(taskService);
+    fileBucket.grantWrite(taskWorker);
     fileBucket.grantRead(taskService);
     fileBucket.grantRead(fileWorker);
 
@@ -214,6 +244,8 @@ export class InfrastructureStack extends cdk.Stack {
         allowMethods: [
           apigw.CorsHttpMethod.GET,
           apigw.CorsHttpMethod.POST,
+          apigw.CorsHttpMethod.PATCH,
+          apigw.CorsHttpMethod.DELETE,
           apigw.CorsHttpMethod.OPTIONS,
         ],
         allowHeaders: ["Content-Type", "Authorization", "X-Amz-Date", "X-Api-Key"],
@@ -224,6 +256,13 @@ export class InfrastructureStack extends cdk.Stack {
     api.addRoutes({
       path: "/tasks",
       methods: [apigw.HttpMethod.GET, apigw.HttpMethod.POST],
+      integration: new HttpLambdaIntegration("TaskServiceIntegration", taskService),
+      authorizer,
+    });
+
+    api.addRoutes({
+      path: "/tasks/{taskId}",
+      methods: [apigw.HttpMethod.DELETE, apigw.HttpMethod.PATCH],
       integration: new HttpLambdaIntegration("TaskServiceIntegration", taskService),
       authorizer,
     });

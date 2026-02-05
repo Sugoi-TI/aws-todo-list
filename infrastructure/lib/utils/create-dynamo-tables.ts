@@ -14,6 +14,7 @@ export const createDynamoTables = (scope: Construct) => {
   // Task table
   const taskTable = new dynamodb.Table(scope, EntityNames.TasksTable, {
     partitionKey: { name: TASK_TABLE.partitionKey, type: dynamodb.AttributeType.STRING },
+    stream: dynamodb.StreamViewType.NEW_IMAGE,
     billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
   });
 

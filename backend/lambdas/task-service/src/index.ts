@@ -17,6 +17,7 @@ import {
   type GetTasksResponseDto,
   type TaskTable,
   type FileTable,
+  TaskToDeletePayload,
 } from "@my-app/shared";
 
 const TASK_TABLE_NAME = process.env.TASK_TABLE_NAME;
@@ -203,7 +204,7 @@ export const handler = async (
       const command = new PutEventsCommand({
         Entries: [
           {
-            Source: EventSources.todoTask,
+            Source: EventSources.task,
             DetailType: EventNames.TaskReceived,
             Detail: JSON.stringify(taskPayload),
             EventBusName: EVENT_BUS_NAME,
@@ -219,9 +220,7 @@ export const handler = async (
         statusCode: 202,
         body: JSON.stringify({
           message: "Task accepted for processing",
-          eventId: result.Entries?.[0].EventId,
-          taskId: taskPayload.taskId,
-          presignedUrl, // Return the URL
+          presignedUrl,
           fileId,
         }),
         headers,
@@ -232,6 +231,157 @@ export const handler = async (
         statusCode: 500,
         body: JSON.stringify({ message: "Internal Server Error" }),
       };
+    }
+  }
+
+  if (method === "PATCH") {
+    const taskId = event.pathParameters?.taskId;
+    let body;
+
+    try {
+      body = event.body ? JSON.parse(event.body) : {};
+    } catch (e) {
+      body = event.body;
+    }
+
+    if (!taskId || !body || !body.title || !body.message) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          message: "Missing required values",
+        }),
+      };
+    }
+
+    try {
+      const getTaskToEditCommand = new GetItemCommand({
+        TableName: TASK_TABLE_NAME,
+        Key: {
+          taskId: { S: taskId },
+        },
+      });
+
+      console.log("Getting task to edit...");
+      const getResponse = await dynamo.send(getTaskToEditCommand);
+
+      if (!getResponse.Item) {
+        return {
+          statusCode: 404,
+          body: JSON.stringify({ message: "Task not found" }),
+        };
+      }
+
+      const taskToEdit = unmarshall(getResponse.Item) as TaskTable;
+
+      if (taskToEdit.userId !== userId) {
+        return {
+          statusCode: 403,
+          body: JSON.stringify({ message: "Forbidden: you don't have editing rights" }),
+        };
+      }
+
+      const taskPayload: TaskReceivedPayload = {
+        ...taskToEdit,
+        title: body.title,
+        message: body.message,
+      };
+
+      const command = new PutEventsCommand({
+        Entries: [
+          {
+            Source: EventSources.task,
+            DetailType: EventNames.TaskUpdated,
+            Detail: JSON.stringify(taskPayload),
+            EventBusName: EVENT_BUS_NAME,
+          },
+        ],
+      });
+
+      console.log("Sending task into event bus");
+
+      const result = await ebClient.send(command);
+
+      console.log(`Event published ID: ${result.Entries?.[0].EventId}`);
+
+      return {
+        statusCode: 202,
+        body: JSON.stringify({
+          message: "Task accepted for processing",
+        }),
+        headers,
+      };
+    } catch (error) {
+      console.log("Error: ", error);
+    }
+  }
+
+  if (method === "DELETE") {
+    const taskId = event.pathParameters?.taskId;
+
+    if (!taskId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          message: "Missing task id",
+        }),
+      };
+    }
+
+    try {
+      const getTaskToDeleteCommand = new GetItemCommand({
+        TableName: TASK_TABLE_NAME,
+        Key: {
+          taskId: { S: taskId },
+        },
+      });
+
+      console.log("Getting task to delete...");
+      const getResponse = await dynamo.send(getTaskToDeleteCommand);
+
+      if (!getResponse.Item) {
+        return {
+          statusCode: 404,
+          body: JSON.stringify({ message: "Task not found" }),
+        };
+      }
+
+      const taskToDelete = unmarshall(getResponse.Item) as TaskTable;
+
+      if (taskToDelete.userId !== userId) {
+        return {
+          statusCode: 403,
+          body: JSON.stringify({ message: "Forbidden: you don't have rights" }),
+        };
+      }
+
+      const deletePayload: TaskToDeletePayload = { taskId, fileId: taskToDelete?.fileId };
+
+      const command = new PutEventsCommand({
+        Entries: [
+          {
+            Source: EventSources.task,
+            DetailType: EventNames.TaskToDelete,
+            Detail: JSON.stringify(deletePayload),
+            EventBusName: EVENT_BUS_NAME,
+          },
+        ],
+      });
+
+      console.log("Sending task into event bus");
+
+      const result = await ebClient.send(command);
+
+      console.log(`Event published ID: ${result.Entries?.[0].EventId}`);
+
+      return {
+        statusCode: 202,
+        body: JSON.stringify({
+          message: "Task accepted for processing",
+        }),
+        headers,
+      };
+    } catch (error) {
+      console.log("Error: ", error);
     }
   }
 
