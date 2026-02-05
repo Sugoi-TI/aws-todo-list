@@ -29,7 +29,7 @@ function isToDeleteEvent(event: UnknownEvent): event is ToDeleteEvent {
 }
 
 const FILE_TABLE_NAME = process.env.FILE_TABLE_NAME;
-const FILE_BUCKET_NAME = process.env.FILE_BUCKET_NAME;
+const FILES_BUCKET_NAME = process.env.FILES_BUCKET_NAME;
 const TASK_TABLE_NAME = process.env.TASK_TABLE_NAME;
 
 const s3Client = new S3Client({});
@@ -37,8 +37,8 @@ const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
 export const handler = async (event: SQSEvent) => {
-  if (!FILE_BUCKET_NAME) {
-    throw new Error("Critical: FILE_BUCKET_NAME is not defined in environment variables");
+  if (!FILES_BUCKET_NAME) {
+    throw new Error("Critical: FILES_BUCKET_NAME is not defined in environment variables");
   }
   if (!FILE_TABLE_NAME) {
     throw new Error("Critical: FILE_TABLE_NAME is not defined in environment variables");
