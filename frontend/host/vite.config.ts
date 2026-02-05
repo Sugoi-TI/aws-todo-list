@@ -15,7 +15,6 @@ export default defineConfig(({ mode }) => {
           taskList: env.VITE_LIST_URL || "http://localhost:5001/assets/remoteEntry.js",
           taskForm: env.VITE_FORM_URL || "http://localhost:5002/assets/remoteEntry.js",
           API_URL: env.VITE_API_URL || "",
-          USER_ID: env.VITE_USER_ID || "",
         },
         shared: {
           react: {
