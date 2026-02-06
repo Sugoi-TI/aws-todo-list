@@ -131,7 +131,7 @@ export class InfrastructureStack extends cdk.Stack {
       environment: {
         TASK_TABLE_NAME: taskTable.tableName,
         FILE_TABLE_NAME: fileTable.tableName,
-        FILES_BUCKET_NAME: fileBucket.bucketName,
+        FILE_BUCKET_NAME: fileBucket.bucketName,
       },
     });
 
