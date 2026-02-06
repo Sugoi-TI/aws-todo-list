@@ -96,22 +96,10 @@ export const handler = async (event: SQSEvent | ToDeleteEvent) => {
   if (isToDeleteEvent(event)) {
     console.log(`Parsing delete task`);
 
-    const getTaskCommand = new GetCommand({
-      TableName: TASK_TABLE_NAME,
-      Key: { taskId: event.detail.taskId },
-    });
-
-    const taskResponse = await docClient.send(getTaskCommand);
-    const task = taskResponse.Item as TaskTable;
-
-    if (!task) {
-      console.log("Task not found");
-    }
-
-    if (task.fileId) {
+    if (event.detail.fileId) {
       const getFileToDelete = new GetCommand({
         TableName: FILE_TABLE_NAME,
-        Key: { fileId: task.fileId },
+        Key: { fileId: event.detail.fileId },
       });
 
       console.log("Getting file to delete...");
@@ -124,7 +112,7 @@ export const handler = async (event: SQSEvent | ToDeleteEvent) => {
           new TransactWriteCommand({
             TransactItems: [
               { Delete: { TableName: TASK_TABLE_NAME, Key: { taskId: event.detail.taskId } } },
-              { Delete: { TableName: FILE_TABLE_NAME, Key: { fileId: task.fileId } } },
+              { Delete: { TableName: FILE_TABLE_NAME, Key: { fileId: event.detail.fileId } } },
             ],
           }),
         );
